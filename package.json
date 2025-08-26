@@ -1,0 +1,43 @@
+{
+  "name": "start-app-dir",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "sass": "sass --watch public/assets/scss/main.scss:public/assets/css/main.css",
+    "init-contact": "node scripts/initContact.js",
+    "init-services": "node scripts/initServices.js",
+    "init-projects": "node scripts/initProjects.js"
+  },
+  "dependencies": {
+    "@thednp/dommatrix": "^2.0.6",
+    "bcryptjs": "^3.0.2",
+    "bootstrap-touchspin": "^4.7.3",
+    "cloudinary": "^2.7.0",
+    "dotenv": "^17.2.1",
+    "formidable": "^3.5.4",
+    "isotope-layout": "^3.0.6",
+    "jsonwebtoken": "^9.0.2",
+    "lightgallery": "^2.7.2",
+    "lucide-react": "^0.525.0",
+    "mongoose": "^8.16.5",
+    "multer": "^2.0.2",
+    "next": "^14.1.0",
+    "next-auth": "^4.24.11",
+    "next-connect": "^1.0.0",
+    "react": "18.2.0",
+    "react-curved-text": "^2.0.2",
+    "react-dom": "18.2.0",
+    "react-hook-form": "^7.61.1",
+    "react-hot-toast": "^2.5.2",
+    "react-modal-video": "^2.0.1",
+    "react-quill": "^2.0.0",
+    "recharts": "^3.1.0",
+    "sass": "^1.66.1",
+    "swiper": "^10.2.0",
+    "wowjs": "^1.1.3"
+  }
+}
