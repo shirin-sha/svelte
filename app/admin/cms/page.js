@@ -32,9 +32,9 @@ export default function CMSPage() {
     }
   };
 
-  const toggleSectionStatus = async (pageId, sectionName, isActive) => {
+  const toggleSectionStatus = async (pageSlug, sectionName, isActive) => {
     try {
-      const response = await fetch(`/api/content/pages/${pageId}/sections/${sectionName}/toggle`, {
+      const response = await fetch(`/api/content/pages/${pageSlug}/sections/${sectionName}/toggle`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive })
@@ -153,7 +153,7 @@ export default function CMSPage() {
                         </td>
                         <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb', textAlign: 'center' }}>
                           <button
-                            onClick={() => toggleSectionStatus(page._id, section.name, !section.isActive)}
+                            onClick={() => toggleSectionStatus(page.slug, section.name, !section.isActive)}
                             style={{
                               background: section.isActive ? '#10b981' : '#6b7280',
                               color: 'white',

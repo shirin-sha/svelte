@@ -5,10 +5,10 @@ import Page from '@/models/Page';
 export async function PUT(req, { params }) {
   try {
     await dbConnect();
-    const { id, section } = params;
+    const { slug, section } = params;
     const { isActive } = await req.json();
 
-    const page = await Page.findById(id);
+    const page = await Page.findOne({ slug });
     if (!page) return NextResponse.json({ error: 'Page not found' }, { status: 404 });
 
     const target = page.sections.find(s => s.name === section);
