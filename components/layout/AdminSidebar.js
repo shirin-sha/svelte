@@ -18,13 +18,10 @@ const navItems = [
       { label: 'Home Page', href: '/admin/cms/home', icon: '🏠' },
       { label: 'About', href: '/admin/cms/about', icon: 'ℹ️' },
       { label: 'Services', href: '/admin/services', icon: '🛠️' },
-      { label: 'Contact', href: '/admin/cms/contact', icon: '📞' },
-      { label: 'Our Team', href: '/admin/cms/team', icon: '👥' },
-      { label: 'Projects', href: '/admin/projects', icon: '📁' },
       { label: 'Blog', href: '/admin/blogs', icon: '📝' },
-      { label: 'FAQ', href: '/admin/cms/faq', icon: '❓' },
-      { label: 'Pricing', href: '/admin/cms/pricing', icon: '💰' },
-      { label: 'Testimonials', href: '/admin/cms/testimonials', icon: '💬' },
+      { label: 'Contact', href: '/admin/cms/contact', icon: '📞' },
+
+ 
       { label: 'Footer', href: '/admin/footer', icon: '📄' },
     ]
   },
