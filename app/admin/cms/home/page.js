@@ -57,17 +57,9 @@ export default function HomeCMS() {
   };
 
   const handleEdit = (sectionName) => {
-    // Route to specific admin pages for sections that have dedicated admin interfaces
-    switch (sectionName) {
-      case 'features':
-        router.push('/admin/features');
-        break;
-      case 'about':
-        router.push('/admin/about');
-        break;
-      default:
+  
         router.push(`/admin/${sectionName}`);
-    }
+
   };
 
   const handlePreview = (sectionName) => {

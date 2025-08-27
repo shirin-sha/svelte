@@ -19,7 +19,7 @@ const navItems = [
       { label: 'About', href: '/admin/cms/about', icon: 'ℹ️' },
       { label: 'Services', href: '/admin/services', icon: '🛠️' },
       { label: 'Blog', href: '/admin/blogs', icon: '📝' },
-      { label: 'Contact', href: '/admin/cms/contact', icon: '📞' },
+      { label: 'Contact', href: '/admin/contact', icon: '📞' },
 
  
       { label: 'Footer', href: '/admin/footer', icon: '📄' },
