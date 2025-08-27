@@ -94,7 +94,7 @@ export default function PageEditor() {
             {showMetaForm ? 'Cancel' : 'Edit Meta'}
           </button>
           <button 
-            onClick={() => router.push(`/admin/cms/${slug}/preview`)}
+            onClick={() => router.push(`#`)}
             style={{ background: '#10b981', color: 'white', border: 'none', padding: '10px 20px', borderRadius: 6, cursor: 'pointer' }}
           >
             Preview
@@ -242,7 +242,7 @@ export default function PageEditor() {
                   <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb', textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
                       <button 
-                        onClick={() => router.push(`/admin/cms/${slug}/sections/${section.name}/preview`)}
+                        onClick={() => router.push(`#`)}
                         style={{ background: '#10b981', color: 'white', border: 'none', padding: '4px 8px', borderRadius: 4, cursor: 'pointer', fontSize: '12px' }}
                       >
                         Preview

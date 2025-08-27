@@ -66,12 +66,12 @@ export default function HomeCMS() {
         router.push('/admin/about');
         break;
       default:
-        router.push(`/admin/cms/home/sections/${sectionName}/edit`);
+        router.push(`/admin/${sectionName}`);
     }
   };
 
   const handlePreview = (sectionName) => {
-    router.push(`/admin/cms/home/sections/${sectionName}/preview`);
+    router.push(`#`);
   };
 
   const toggleSection = async (sectionName) => {
@@ -400,7 +400,7 @@ export default function HomeCMS() {
                           alignItems: 'center',
                           gap: '8px'
                         }}
-                        title={`Edit ${section.title}`}
+                        title={`${section.title}`}
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
