@@ -31,6 +31,7 @@ export default function FooterPage() {
 
   const fetchFooterSections = async () => {
     try {
+      setLoading(true);
       const response = await fetch('/api/content/footer');
       if (response.ok) {
         const data = await response.json();
@@ -49,15 +50,13 @@ export default function FooterPage() {
       const url = editingSection 
         ? `/api/content/footer/${editingSection._id}`
         : '/api/content/footer';
-      
       const method = editingSection ? 'PUT' : 'POST';
-      
+      const payload = { ...formData };
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
-      
       if (response.ok) {
         setFormData({
           section: 'company',
@@ -72,9 +71,12 @@ export default function FooterPage() {
         setShowForm(false);
         setEditingSection(null);
         fetchFooterSections();
+      } else {
+        alert('Failed to save section');
       }
     } catch (error) {
       console.error('Error saving footer section:', error);
+      alert('Error saving section');
     }
   };
 
@@ -94,309 +96,261 @@ export default function FooterPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this footer section?')) return;
-    
+    if (!confirm('Delete this footer section?')) return;
     try {
-      const response = await fetch(`/api/content/footer/${id}`, {
-        method: 'DELETE'
-      });
-      
+      const response = await fetch(`/api/content/footer/${id}`, { method: 'DELETE' });
       if (response.ok) {
         fetchFooterSections();
       }
     } catch (error) {
       console.error('Error deleting footer section:', error);
+      alert('Error deleting section');
     }
   };
 
   const addLink = () => {
-    setFormData(prev => ({
-      ...prev,
-      links: [...prev.links, { text: '', url: '' }]
-    }));
+    setFormData(prev => ({ ...prev, links: [...prev.links, { text: '', url: '' }] }));
   };
-
   const updateLink = (index, field, value) => {
     setFormData(prev => ({
       ...prev,
-      links: prev.links.map((link, i) => 
-        i === index ? { ...link, [field]: value } : link
-      )
+      links: prev.links.map((link, i) => i === index ? { ...link, [field]: value } : link)
     }));
   };
-
   const removeLink = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      links: prev.links.filter((_, i) => i !== index)
-    }));
+    setFormData(prev => ({ ...prev, links: prev.links.filter((_, i) => i !== index) }));
   };
 
   const addSocialLink = () => {
-    setFormData(prev => ({
-      ...prev,
-      socialLinks: [...prev.socialLinks, { platform: '', url: '', icon: '' }]
-    }));
+    setFormData(prev => ({ ...prev, socialLinks: [...prev.socialLinks, { platform: '', url: '', icon: '' }] }));
   };
-
   const updateSocialLink = (index, field, value) => {
     setFormData(prev => ({
       ...prev,
-      socialLinks: prev.socialLinks.map((link, i) => 
-        i === index ? { ...link, [field]: value } : link
-      )
+      socialLinks: prev.socialLinks.map((link, i) => i === index ? { ...link, [field]: value } : link)
     }));
   };
-
   const removeSocialLink = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      socialLinks: prev.socialLinks.filter((_, i) => i !== index)
-    }));
+    setFormData(prev => ({ ...prev, socialLinks: prev.socialLinks.filter((_, i) => i !== index) }));
+  };
+
+  const toggleActive = async (section) => {
+    try {
+      const res = await fetch(`/api/content/footer/${section._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...section, isActive: !section.isActive })
+      });
+      if (res.ok) fetchFooterSections();
+    } catch (e) {
+      console.error('Error toggling section:', e);
+    }
+  };
+
+  const swapOrder = async (a, b) => {
+    // swap order values between two sections
+    try {
+      const reqs = [
+        fetch(`/api/content/footer/${a._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...a, order: b.order }) }),
+        fetch(`/api/content/footer/${b._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...b, order: a.order }) })
+      ];
+      await Promise.all(reqs);
+      await fetchFooterSections();
+    } catch (e) {
+      console.error('Error reordering sections:', e);
+    }
+  };
+
+  const moveUp = (index) => {
+    if (index <= 0) return;
+    const current = footerSections[index];
+    const prev = footerSections[index - 1];
+    swapOrder(current, prev);
+  };
+  const moveDown = (index) => {
+    if (index >= footerSections.length - 1) return;
+    const current = footerSections[index];
+    const next = footerSections[index + 1];
+    swapOrder(current, next);
   };
 
   if (loading) return <AdminLayout title="Footer"><div>Loading...</div></AdminLayout>;
 
   return (
     <AdminLayout title="Manage Footer">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h2>Footer Sections</h2>
-        <button 
-          onClick={() => setShowForm(!showForm)}
-          style={{ background: '#2563eb', color: 'white', border: 'none', padding: '10px 20px', borderRadius: 6, cursor: 'pointer' }}
-        >
-          {showForm ? 'Cancel' : 'Add New Section'}
-        </button>
+      <style jsx>{`
+        .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; box-shadow:0 4px 6px -1px rgba(0,0,0,0.06); }
+        .card-header { padding:16px 20px; border-bottom:1px solid #e5e7eb; background:linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%); display:flex; justify-content:space-between; align-items:center; }
+        .card-body { padding:20px; }
+        .btn { border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:600; }
+        .btn-primary { background:#3b82f6; color:#fff; }
+        .btn-success { background:#10b981; color:#fff; }
+        .btn-danger { background:#ef4444; color:#fff; }
+        .btn-gray { background:#6b7280; color:#fff; }
+        table { width:100%; border-collapse:collapse; }
+        th, td { padding:12px 16px; border-bottom:1px solid #f3f4f6; text-align:left; }
+        th { background:#f9fafb; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:#374151; }
+        input, textarea, select { width:100%; padding:10px 12px; border:1px solid #e5e7eb; border-radius:8px; font-size:14px; }
+        .row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+        .row-1 { display:grid; grid-template-columns:1fr; gap:16px; }
+        .switch { display:inline-flex; align-items:center; gap:8px; }
+      `}</style>
+
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="card-header">
+          <div style={{ fontWeight: 600, color: '#1f2937' }}>Footer Sections</div>
+          <button className="btn btn-primary" onClick={() => { setEditingSection(null); setFormData({ section: 'company', title: '', content: '', links: [], contactInfo: { address: '', phone: '', email: '' }, socialLinks: [], order: footerSections.length, isActive: true }); setShowForm(true); }}>+ Add Section</button>
+        </div>
+        <div className="card-body" style={{ overflowX: 'auto' }}>
+          {footerSections.length === 0 ? (
+            <div style={{ color: '#6b7280' }}>No footer sections yet. Click "Add Section" to create one.</div>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Section</th>
+                  <th>Title</th>
+                  <th>Order</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {footerSections.map((s, idx) => (
+                  <tr key={s._id}>
+                    <td style={{ textTransform: 'capitalize' }}>{s.section}</td>
+                    <td>{s.title}</td>
+                    <td>{s.order}</td>
+                    <td>{s.isActive ? 'Active' : 'Hidden'}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                        <button className="btn btn-gray" onClick={() => moveUp(idx)} title="Move up">↑</button>
+                        <button className="btn btn-gray" onClick={() => moveDown(idx)} title="Move down">↓</button>
+                        <button className="btn btn-success" onClick={() => toggleActive(s)}>{s.isActive ? 'Hide' : 'Show'}</button>
+                        <button className="btn btn-primary" onClick={() => handleEdit(s)}>Edit</button>
+                        <button className="btn btn-danger" onClick={() => handleDelete(s._id)}>Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
 
       {showForm && (
-        <div style={{ background: '#fff', padding: 24, borderRadius: 8, marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-          <h3>{editingSection ? 'Edit Footer Section' : 'Add New Footer Section'}</h3>
-          <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Section Type:</label>
-              <select 
-                value={formData.section} 
-                onChange={e => setFormData(prev => ({ ...prev, section: e.target.value }))}
-                required
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              >
-                <option value="company">Company</option>
-                <option value="services">Services</option>
-                <option value="contact">Contact</option>
-                <option value="social">Social</option>
-              </select>
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Title:</label>
-              <input 
-                type="text" 
-                value={formData.title} 
-                onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                required
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Content:</label>
-              <textarea 
-                value={formData.content} 
-                onChange={e => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                required
-                rows={4}
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Order:</label>
-              <input 
-                type="number" 
-                value={formData.order} 
-                onChange={e => setFormData(prev => ({ ...prev, order: parseInt(e.target.value) }))}
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
-
-            {/* Links Section */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Links:</label>
-              {formData.links.map((link, index) => (
-                <div key={index} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                  <input 
-                    type="text" 
-                    placeholder="Link Text"
-                    value={link.text} 
-                    onChange={e => updateLink(index, 'text', e.target.value)}
-                    style={{ flex: 1, padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                  />
-                  <input 
-                    type="text" 
-                    placeholder="URL"
-                    value={link.url} 
-                    onChange={e => updateLink(index, 'url', e.target.value)}
-                    style={{ flex: 1, padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => removeLink(index)}
-                    style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 12px', borderRadius: 4, cursor: 'pointer' }}
-                  >
-                    Remove
-                  </button>
+        <form onSubmit={handleSubmit} className="card">
+          <div className="card-header">
+            <div style={{ fontWeight: 600, color: '#1f2937' }}>{editingSection ? 'Edit Section' : 'Add Section'}</div>
+            <button type="button" className="btn btn-gray" onClick={() => { setShowForm(false); setEditingSection(null); }}>Close</button>
+          </div>
+          <div className="card-body">
+            <div className="row">
+              <div>
+                <label>Section Type</label>
+                <select value={formData.section} onChange={e => setFormData(prev => ({ ...prev, section: e.target.value }))}>
+                  <option value="company">Company</option>
+                  <option value="services">Services</option>
+                  <option value="contact">Contact</option>
+                  <option value="social">Social</option>
+                </select>
+              </div>
+              <div>
+                <label>Title</label>
+                <input value={formData.title} onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))} />
+              </div>
+              <div className="row-1">
+                <div>
+                  <label>Content</label>
+                  <textarea value={formData.content} onChange={e => setFormData(prev => ({ ...prev, content: e.target.value }))} />
                 </div>
-              ))}
-              <button 
-                type="button"
-                onClick={addLink}
-                style={{ background: '#10b981', color: 'white', border: 'none', padding: '8px 12px', borderRadius: 4, cursor: 'pointer' }}
-              >
-                Add Link
-              </button>
+              </div>
+              <div>
+                <label>Order</label>
+                <input type="number" value={formData.order} onChange={e => setFormData(prev => ({ ...prev, order: Number(e.target.value) }))} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input id="active" type="checkbox" checked={formData.isActive} onChange={e => setFormData(prev => ({ ...prev, isActive: e.target.checked }))} />
+                <label htmlFor="active">Active</label>
+              </div>
             </div>
 
-            {/* Contact Info Section */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Contact Information:</label>
-              <input 
-                type="text" 
-                placeholder="Address"
-                value={formData.contactInfo.address} 
-                onChange={e => setFormData(prev => ({ 
-                  ...prev, 
-                  contactInfo: { ...prev.contactInfo, address: e.target.value }
-                }))}
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4, marginBottom: 8 }}
-              />
-              <input 
-                type="text" 
-                placeholder="Phone"
-                value={formData.contactInfo.phone} 
-                onChange={e => setFormData(prev => ({ 
-                  ...prev, 
-                  contactInfo: { ...prev.contactInfo, phone: e.target.value }
-                }))}
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4, marginBottom: 8 }}
-              />
-              <input 
-                type="email" 
-                placeholder="Email"
-                value={formData.contactInfo.email} 
-                onChange={e => setFormData(prev => ({ 
-                  ...prev, 
-                  contactInfo: { ...prev.contactInfo, email: e.target.value }
-                }))}
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
-
-            {/* Social Links Section */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Social Links:</label>
-              {formData.socialLinks.map((link, index) => (
-                <div key={index} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                  <input 
-                    type="text" 
-                    placeholder="Platform"
-                    value={link.platform} 
-                    onChange={e => updateSocialLink(index, 'platform', e.target.value)}
-                    style={{ flex: 1, padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                  />
-                  <input 
-                    type="text" 
-                    placeholder="URL"
-                    value={link.url} 
-                    onChange={e => updateSocialLink(index, 'url', e.target.value)}
-                    style={{ flex: 1, padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                  />
-                  <input 
-                    type="text" 
-                    placeholder="Icon"
-                    value={link.icon} 
-                    onChange={e => updateSocialLink(index, 'icon', e.target.value)}
-                    style={{ flex: 1, padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => removeSocialLink(index)}
-                    style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 12px', borderRadius: 4, cursor: 'pointer' }}
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-              <button 
-                type="button"
-                onClick={addSocialLink}
-                style={{ background: '#10b981', color: 'white', border: 'none', padding: '8px 12px', borderRadius: 4, cursor: 'pointer' }}
-              >
-                Add Social Link
-              </button>
-            </div>
-
-            <button type="submit" style={{ background: '#10b981', color: 'white', border: 'none', padding: '10px 20px', borderRadius: 6, cursor: 'pointer' }}>
-              {editingSection ? 'Update Section' : 'Create Section'}
-            </button>
-          </form>
-        </div>
-      )}
-
-      <div style={{ background: '#fff', borderRadius: 8, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: '#f9fafb' }}>
-              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Section</th>
-              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Title</th>
-              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Content</th>
-              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Order</th>
-              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {footerSections.length === 0 ? (
-              <tr>
-                <td colSpan="5" style={{ padding: 24, textAlign: 'center', color: '#6b7280' }}>
-                  No footer sections found. Create your first section above.
-                </td>
-              </tr>
-            ) : (
-              footerSections.map(section => (
-                <tr key={section._id}>
-                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
-                    <span style={{ 
-                      padding: '4px 8px', 
-                      borderRadius: 4, 
-                      fontSize: 12,
-                      background: '#e5e7eb',
-                      color: '#374151'
-                    }}>
-                      {section.section}
-                    </span>
-                  </td>
-                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>{section.title}</td>
-                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
-                    {section.content.substring(0, 50)}...
-                  </td>
-                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>{section.order}</td>
-                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
-                    <button 
-                      onClick={() => handleEdit(section)}
-                      style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '6px 12px', borderRadius: 4, marginRight: 8, cursor: 'pointer' }}
-                    >
-                      Edit
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(section._id)}
-                      style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: 4, cursor: 'pointer' }}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))
+            {(formData.section === 'company' || formData.section === 'services') && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontWeight: 600, marginBottom: 8 }}>Links</div>
+                {formData.links.map((link, i) => (
+                  <div key={i} className="row" style={{ marginBottom: 8 }}>
+                    <div>
+                      <label>Text</label>
+                      <input value={link.text} onChange={e => updateLink(i, 'text', e.target.value)} />
+                    </div>
+                    <div>
+                      <label>URL</label>
+                      <input value={link.url} onChange={e => updateLink(i, 'url', e.target.value)} />
+                    </div>
+                    <div style={{ display:'flex', alignItems:'flex-end' }}>
+                      <button type="button" className="btn btn-danger" onClick={() => removeLink(i)}>Remove</button>
+                    </div>
+                  </div>
+                ))}
+                <button type="button" className="btn btn-primary" onClick={addLink}>+ Add Link</button>
+              </div>
             )}
-          </tbody>
-        </table>
-      </div>
+
+            {formData.section === 'contact' && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontWeight: 600, marginBottom: 8 }}>Contact Info</div>
+                <div className="row">
+                  <div>
+                    <label>Address</label>
+                    <input value={formData.contactInfo.address} onChange={e => setFormData(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, address: e.target.value } }))} />
+                  </div>
+                  <div>
+                    <label>Phone</label>
+                    <input value={formData.contactInfo.phone} onChange={e => setFormData(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, phone: e.target.value } }))} />
+                  </div>
+                  <div>
+                    <label>Email</label>
+                    <input value={formData.contactInfo.email} onChange={e => setFormData(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, email: e.target.value } }))} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {formData.section === 'social' && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontWeight: 600, marginBottom: 8 }}>Social Links</div>
+                {formData.socialLinks.map((link, i) => (
+                  <div key={i} className="row" style={{ marginBottom: 8 }}>
+                    <div>
+                      <label>Platform</label>
+                      <input value={link.platform} onChange={e => updateSocialLink(i, 'platform', e.target.value)} />
+                    </div>
+                    <div>
+                      <label>URL</label>
+                      <input value={link.url} onChange={e => updateSocialLink(i, 'url', e.target.value)} />
+                    </div>
+                    <div>
+                      <label>Icon (optional)</label>
+                      <input value={link.icon} onChange={e => updateSocialLink(i, 'icon', e.target.value)} />
+                    </div>
+                    <div style={{ display:'flex', alignItems:'flex-end' }}>
+                      <button type="button" className="btn btn-danger" onClick={() => removeSocialLink(i)}>Remove</button>
+                    </div>
+                  </div>
+                ))}
+                <button type="button" className="btn btn-primary" onClick={addSocialLink}>+ Add Social Link</button>
+              </div>
+            )}
+
+            <div style={{ display:'flex', justifyContent:'flex-end', gap:12, marginTop:16 }}>
+              <button type="button" className="btn btn-gray" onClick={() => { setShowForm(false); setEditingSection(null); }}>Cancel</button>
+              <button type="submit" className="btn btn-success">{editingSection ? 'Update Section' : 'Create Section'}</button>
+            </div>
+          </div>
+        </form>
+      )}
     </AdminLayout>
   );
 } 

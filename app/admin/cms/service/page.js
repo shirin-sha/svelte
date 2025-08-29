@@ -3,11 +3,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
 
-export default function HomeCMS() {
+export default function ServiceCMS() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [sections, setSections] = useState([]);
   const [updating, setUpdating] = useState({});
+  const [pageData, setPageData] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -15,55 +16,98 @@ export default function HomeCMS() {
       router.push('/admin/login');
       return;
     }
-    fetchSections();
+    fetchServicePage();
   }, [router]);
 
-  const fetchSections = async () => {
-    try {
-      const response = await fetch('/api/content/home-sections');
-      if (response.ok) {
-        const apiSections = await response.json();
-        
-        // Map API sections with descriptions
-        const sectionsWithDescriptions = [
-          { name: 'banner', title: 'Banner', description: 'Main hero slider section' },
-          { name: 'features', title: 'Features', description: 'Key features showcase' },
-          { name: 'about', title: 'About', description: 'About us section' },
-          { name: 'services', title: 'Services', description: 'Services we provide' },
-          { name: 'projects', title: 'Projects', description: 'Portfolio and projects' },
-          { name: 'contact', title: 'Contact', description: 'Contact information and form' },
-          { name: 'brand', title: 'Brand', description: 'Brand logos and partners' },
-          { name: 'why-choose-us', title: 'Why Choose Us', description: 'Why choose our company' },
-          { name: 'action', title: 'Call to Action', description: 'Call to action section' },
-          { name: 'blog', title: 'Blog', description: 'Latest blog posts' }
-        ];
+  const SERVICE_SLUG = 'services';
 
-        // Merge with API data
-        const mergedSections = sectionsWithDescriptions.map(section => {
-          const apiSection = apiSections.find(api => api.name === section.name);
+  // Static definition aligned with app/(services)/service/page.js structure
+  const serviceSectionBlueprint = [
+    { name: 'service-two', title: 'Services Grid', description: 'List of services' },
+    { name: 'action', title: 'Call to Action', description: 'Contact CTA block' },
+    { name: 'brand', title: 'Brand', description: 'Brand logos and partners' },
+    { name: 'why-choose-us', title: 'Why Choose Us', description: 'Reasons to choose our company' },
+    { name: 'service-one', title: 'Service Highlights', description: 'Featured services with icons' },
+    { name: 'feauture-three', title: 'Features', description: 'Feature highlight with image and text' }
+  ];
+
+  const fetchServicePage = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/content/pages/${SERVICE_SLUG}`);
+      if (response.ok) {
+        const page = await response.json();
+        setPageData(page);
+
+        // Merge blueprint with existing page sections by name
+        const pageSections = Array.isArray(page.sections) ? page.sections : [];
+        const merged = serviceSectionBlueprint.map(blue => {
+          const existing = pageSections.find(s => s.name === blue.name);
           return {
-            ...section,
-            isActive: apiSection ? apiSection.isActive : true
+            ...blue,
+            isActive: existing ? !!existing.isActive : true
           };
         });
-
-        setSections(mergedSections);
+        setSections(merged);
+      } else if (response.status === 404) {
+        // If page is missing, initialize local view with defaults
+        setPageData(null);
+        setSections(serviceSectionBlueprint.map(s => ({ ...s, isActive: true })));
       }
     } catch (error) {
-      console.error('Error fetching sections:', error);
+      console.error('Error fetching about page:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEdit = (sectionName) => {
-  
-        router.push(`/admin/cms/home/${sectionName}`);
+  const ensureSectionExists = async (sectionName, desiredActive) => {
+    try {
+      // If the page exists and already has the section, nothing to do here
+      const exists = pageData?.sections?.some(s => s.name === sectionName);
+      if (exists) return true;
 
+      // Create the section by updating the page with a merged sections array
+      const newSection = {
+        name: sectionName,
+        title: { en: serviceSectionBlueprint.find(s => s.name === sectionName)?.title || sectionName, ar: '' },
+        content: { en: '', ar: '' },
+        image: '',
+        isActive: !!desiredActive,
+        order: (pageData?.sections?.length || 0) + 1,
+        type: 'text'
+      };
+
+      const body = {
+        sections: [...(pageData?.sections || []), newSection]
+      };
+
+      const res = await fetch(`/api/content/pages/${SERVICE_SLUG}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (res.ok) {
+        const updatedPage = await res.json();
+        setPageData(updatedPage);
+        return true;
+      }
+
+      console.error('Failed to add section to page');
+      return false;
+    } catch (error) {
+      console.error('Error ensuring section exists:', error);
+      return false;
+    }
+  };
+
+  const handleEdit = (sectionName) => {
+    router.push(`/admin/cms/services/sections/${sectionName}/edit`);
   };
 
   const handlePreview = (sectionName) => {
-    router.push(`#`);
+    router.push(`/service#${sectionName}`);
   };
 
   const toggleSection = async (sectionName) => {
@@ -73,13 +117,17 @@ export default function HomeCMS() {
     setUpdating(prev => ({ ...prev, [sectionName]: true }));
 
     try {
-      const response = await fetch('/api/content/home-sections', {
+      // Make sure the section exists in DB before toggling
+      const ok = await ensureSectionExists(sectionName, !currentSection.isActive);
+      if (!ok) {
+        alert('Failed to prepare section for toggling');
+        return;
+      }
+
+      const response = await fetch(`/api/content/pages/${SERVICE_SLUG}/sections/${sectionName}/toggle`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sectionName,
-          isActive: !currentSection.isActive
-        })
+        body: JSON.stringify({ isActive: !currentSection.isActive })
       });
 
       if (response.ok) {
@@ -105,7 +153,7 @@ export default function HomeCMS() {
 
   if (loading) {
     return (
-      <AdminLayout title="Home CMS">
+      <AdminLayout title="Service CMS">
         <div style={{ 
           display: 'flex', 
           justifyContent: 'center', 
@@ -131,7 +179,7 @@ export default function HomeCMS() {
   }
 
   return (
-    <AdminLayout title="Home Page CMS">
+    <AdminLayout title="Service Page CMS">
       <style jsx>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
@@ -231,7 +279,7 @@ export default function HomeCMS() {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600', color: '#1f2937' }}>
-              Home Page Sections
+              Service Page Sections
             </h2>
             <div style={{ 
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',

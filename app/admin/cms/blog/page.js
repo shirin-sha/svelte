@@ -3,11 +3,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
 
-export default function HomeCMS() {
+export default function BlogCMS() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [sections, setSections] = useState([]);
   const [updating, setUpdating] = useState({});
+  const [pageData, setPageData] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -15,55 +16,124 @@ export default function HomeCMS() {
       router.push('/admin/login');
       return;
     }
-    fetchSections();
+    fetchBlogPage();
   }, [router]);
 
-  const fetchSections = async () => {
-    try {
-      const response = await fetch('/api/content/home-sections');
-      if (response.ok) {
-        const apiSections = await response.json();
-        
-        // Map API sections with descriptions
-        const sectionsWithDescriptions = [
-          { name: 'banner', title: 'Banner', description: 'Main hero slider section' },
-          { name: 'features', title: 'Features', description: 'Key features showcase' },
-          { name: 'about', title: 'About', description: 'About us section' },
-          { name: 'services', title: 'Services', description: 'Services we provide' },
-          { name: 'projects', title: 'Projects', description: 'Portfolio and projects' },
-          { name: 'contact', title: 'Contact', description: 'Contact information and form' },
-          { name: 'brand', title: 'Brand', description: 'Brand logos and partners' },
-          { name: 'why-choose-us', title: 'Why Choose Us', description: 'Why choose our company' },
-          { name: 'action', title: 'Call to Action', description: 'Call to action section' },
-          { name: 'blog', title: 'Blog', description: 'Latest blog posts' }
-        ];
+  const BLOG_SLUG = 'blog';
 
-        // Merge with API data
-        const mergedSections = sectionsWithDescriptions.map(section => {
-          const apiSection = apiSections.find(api => api.name === section.name);
+  // Static definition aligned with app/(blog)/blog/page.js structure
+  const blogSectionBlueprint = [
+    { name: 'blog-one', title: 'Blog List', description: 'Grid of published blog posts' }
+  ];
+
+  const fetchBlogPage = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/content/pages/${BLOG_SLUG}`);
+      if (response.ok) {
+        const page = await response.json();
+        setPageData(page);
+
+        // Merge blueprint with existing page sections by name
+        const pageSections = Array.isArray(page.sections) ? page.sections : [];
+        const merged = blogSectionBlueprint.map(blue => {
+          const existing = pageSections.find(s => s.name === blue.name);
           return {
-            ...section,
-            isActive: apiSection ? apiSection.isActive : true
+            ...blue,
+            isActive: existing ? !!existing.isActive : true
           };
         });
-
-        setSections(mergedSections);
+        setSections(merged);
+      } else if (response.status === 404) {
+        // If page is missing, initialize local view with defaults and create it
+        setPageData(null);
+        setSections(blogSectionBlueprint.map(s => ({ ...s, isActive: true })));
+        await createBlogPage();
       }
     } catch (error) {
-      console.error('Error fetching sections:', error);
+      console.error('Error fetching about page:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEdit = (sectionName) => {
-  
-        router.push(`/admin/cms/home/${sectionName}`);
+  const createBlogPage = async () => {
+    try {
+      const res = await fetch('/api/content/pages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Blog',
+          slug: BLOG_SLUG,
+          metaTitle: { en: 'BLOG | ENMAA', ar: '' },
+          metaDescription: { en: 'Latest articles and company news.', ar: '' },
+          sections: blogSectionBlueprint.map((s, idx) => ({
+            name: s.name,
+            title: { en: s.title, ar: '' },
+            content: { en: '', ar: '' },
+            image: '',
+            isActive: true,
+            order: idx + 1,
+            type: 'text'
+          }))
+        })
+      });
+      if (res.ok) {
+        const page = await res.json();
+        setPageData(page);
+      }
+    } catch (e) {
+      console.error('Failed to create blog page:', e);
+    }
+  };
 
+  const ensureSectionExists = async (sectionName, desiredActive) => {
+    try {
+      // If the page exists and already has the section, nothing to do here
+      const exists = pageData?.sections?.some(s => s.name === sectionName);
+      if (exists) return true;
+
+      // Create the section by updating the page with a merged sections array
+      const newSection = {
+        name: sectionName,
+        title: { en: blogSectionBlueprint.find(s => s.name === sectionName)?.title || sectionName, ar: '' },
+        content: { en: '', ar: '' },
+        image: '',
+        isActive: !!desiredActive,
+        order: (pageData?.sections?.length || 0) + 1,
+        type: 'text'
+      };
+
+      const body = {
+        sections: [...(pageData?.sections || []), newSection]
+      };
+
+      const res = await fetch(`/api/content/pages/${BLOG_SLUG}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (res.ok) {
+        const updatedPage = await res.json();
+        setPageData(updatedPage);
+        return true;
+      }
+
+      console.error('Failed to add section to page');
+      return false;
+    } catch (error) {
+      console.error('Error ensuring section exists:', error);
+      return false;
+    }
+  };
+
+  const handleEdit = (sectionName) => {
+    router.push(`/admin/cms/blog/sections/${sectionName}/edit`);
   };
 
   const handlePreview = (sectionName) => {
-    router.push(`#`);
+    router.push(`/blog#${sectionName}`);
   };
 
   const toggleSection = async (sectionName) => {
@@ -73,13 +143,17 @@ export default function HomeCMS() {
     setUpdating(prev => ({ ...prev, [sectionName]: true }));
 
     try {
-      const response = await fetch('/api/content/home-sections', {
+      // Make sure the section exists in DB before toggling
+      const ok = await ensureSectionExists(sectionName, !currentSection.isActive);
+      if (!ok) {
+        alert('Failed to prepare section for toggling');
+        return;
+      }
+
+      const response = await fetch(`/api/content/pages/${BLOG_SLUG}/sections/${sectionName}/toggle`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sectionName,
-          isActive: !currentSection.isActive
-        })
+        body: JSON.stringify({ isActive: !currentSection.isActive })
       });
 
       if (response.ok) {
@@ -105,7 +179,7 @@ export default function HomeCMS() {
 
   if (loading) {
     return (
-      <AdminLayout title="Home CMS">
+      <AdminLayout title="Blog CMS">
         <div style={{ 
           display: 'flex', 
           justifyContent: 'center', 
@@ -131,7 +205,7 @@ export default function HomeCMS() {
   }
 
   return (
-    <AdminLayout title="Home Page CMS">
+    <AdminLayout title="Blog Page CMS">
       <style jsx>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
@@ -231,7 +305,7 @@ export default function HomeCMS() {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600', color: '#1f2937' }}>
-              Home Page Sections
+              Blog Page Sections
             </h2>
             <div style={{ 
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',

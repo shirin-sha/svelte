@@ -62,10 +62,8 @@ export default function Layout({ headerStyle, footerStyle, headTitle, breadcrumb
 
                 {children}
 
-                {!footerStyle && < Footer1 />}
-                {footerStyle == 1 ? < Footer1 /> : null}
-                {!footerStyle && < Footer2 />}
-                {footerStyle == 2 ? < Footer2 /> : null}
+                {/* Render a single footer. Default to Footer1 if not specified. */}
+                {footerStyle == 2 ? <Footer2 /> : <Footer1 />}
             </div>
             <BackToTop scroll={scroll} />
         </>
