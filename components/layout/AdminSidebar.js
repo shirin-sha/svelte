@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
 const navItems = [
-  { label: 'Dashboard', href: '/admin/dashboard', icon: '🏠' },
+
   // { 
   //   label: 'Enquiries', 
   //   href: '/admin/enquiries', 

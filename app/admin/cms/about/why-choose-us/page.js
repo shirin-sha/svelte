@@ -205,7 +205,7 @@ export default function WhyChooseUsPage() {
   return (
     <AdminLayout title="Manage Why Choose Us Section">
       <div style={{ background: '#fff', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-        <h2 style={{ marginBottom: 24 }}>Why Choose Us Section Settings</h2>
+        {/* <h2 style={{ marginBottom: 24 }}>Why Choose Us Section Settings</h2> */}
         
         <form onSubmit={handleSubmit}>
           {/* Features Section */}
@@ -419,101 +419,11 @@ export default function WhyChooseUsPage() {
               fontWeight: '500'
             }}
           >
-            {isSubmitting ? 'Updating...' : 'Update Why Choose Us Section'}
+            {isSubmitting ? 'Updating...' : 'Update'}
           </button>
         </form>
 
-        {/* Preview Section */}
-        <div style={{ marginTop: 32, padding: 20, background: '#f8f9fa', borderRadius: 6 }}>
-          <h3 style={{ marginBottom: 16 }}>💡 Preview</h3>
-          <div style={{ 
-            background: '#fff', 
-            padding: 24, 
-            borderRadius: 8,
-            border: '1px solid #e5e7eb'
-          }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-              {/* Left Side - Images */}
-              <div>
-                <div style={{ position: 'relative', marginBottom: 16 }}>
-                  {(imagePreviews.shapeImage || whyChooseUsData.shapeImage) && (
-                    <img 
-                      src={imagePreviews.shapeImage || whyChooseUsData.shapeImage} 
-                      alt="Shape" 
-                      style={{ 
-                        position: 'absolute', 
-                        top: 0, 
-                        left: 0, 
-                        width: 60, 
-                        height: 60 
-                      }} 
-                    />
-                  )}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                    {(imagePreviews.leftImage1 || whyChooseUsData.leftImage1) && (
-                      <img 
-                        src={imagePreviews.leftImage1 || whyChooseUsData.leftImage1} 
-                        alt="Feature 1" 
-                        style={{ 
-                          width: '100%', 
-                          height: 120, 
-                          objectFit: 'cover',
-                          borderRadius: 8
-                        }} 
-                      />
-                    )}
-                    {(imagePreviews.leftImage2 || whyChooseUsData.leftImage2) && (
-                      <img 
-                        src={imagePreviews.leftImage2 || whyChooseUsData.leftImage2} 
-                        alt="Feature 2" 
-                        style={{ 
-                          width: '100%', 
-                          height: 120, 
-                          objectFit: 'cover',
-                          borderRadius: 8
-                        }} 
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Side - Features */}
-              <div>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                  {whyChooseUsData.features.map((feature, index) => (
-                    <li key={index} style={{ marginBottom: 24 }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-                        <div style={{ 
-                          background: '#f59e0b', 
-                          color: 'white', 
-                          width: 50, 
-                          height: 50, 
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '20px',
-                          flexShrink: 0
-                        }}>
-                          <span className={feature.icon}></span>
-                        </div>
-                        <div>
-                          <h4 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: '600' }}>
-                            {feature.title}
-                          </h4>
-                          <p style={{ margin: 0, color: '#6b7280', lineHeight: '1.5' }}>
-                            {feature.description}
-                          </p>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
+      
       </div>
     </AdminLayout>
   );
