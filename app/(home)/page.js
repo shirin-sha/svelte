@@ -83,7 +83,7 @@ export default function Home() {
                     justifyContent: 'center',
                     background: '#f8f9fa'
                 }}>
-                    <div style={{ textAlign: 'center' }}>
+                    {/* <div style={{ textAlign: 'center' }}>
                         <div style={{ 
                             width: 50, 
                             height: 50, 
@@ -94,7 +94,7 @@ export default function Home() {
                             margin: '0 auto 20px'
                         }}></div>
                         <p style={{ color: '#6b7280', fontSize: '16px' }}>Loading page sections...</p>
-                    </div>
+                    </div> */}
                 </div>
                 <style jsx>{`
                     @keyframes spin {
