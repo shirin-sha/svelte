@@ -23,7 +23,7 @@ export default function AboutCMS() {
 
   // Static definition aligned with app/about/page.js structure
   const aboutSectionBlueprint = [
-    { name: 'about-one', title: 'About Section', description: 'Introduction and progress bars' },
+    { name: 'aboutsection', title: 'About Section', description: 'Introduction and progress bars' },
     { name: 'testimonials', title: 'Testimonials', description: 'Client testimonials carousel' },
     { name: 'brand', title: 'Brand', description: 'Brand logos and partners' },
     { name: 'why-choose-us', title: 'Why Choose Us', description: 'Reasons to choose our company' },
@@ -103,7 +103,7 @@ export default function AboutCMS() {
   };
 
   const handleEdit = (sectionName) => {
-    router.push(`/admin/cms/about/sections/${sectionName}/edit`);
+    router.push(`/admin/cms/about/${sectionName}`);
   };
 
   const handlePreview = (sectionName) => {

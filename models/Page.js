@@ -30,11 +30,44 @@ const pageSchema = new mongoose.Schema({
       en: { type: String, default: '' },
       ar: { type: String, default: '' }
     },
+    subtitle: {
+      en: { type: String, default: '' },
+      ar: { type: String, default: '' }
+    },
     content: {
       en: { type: String, default: '' },
       ar: { type: String, default: '' }
     },
     image: {
+      type: String,
+      default: ''
+    },
+    backgroundImage: {
+      type: String,
+      default: ''
+    },
+    buttonText: {
+      type: String,
+      default: ''
+    },
+    buttonLink: {
+      type: String,
+      default: ''
+    },
+    features: [{
+      icon: { type: String, default: '' },
+      title: { type: String, default: '' },
+      description: { type: String, default: '' }
+    }],
+    leftImage1: {
+      type: String,
+      default: ''
+    },
+    leftImage2: {
+      type: String,
+      default: ''
+    },
+    shapeImage: {
       type: String,
       default: ''
     },
@@ -48,7 +81,7 @@ const pageSchema = new mongoose.Schema({
     },
     type: {
       type: String,
-      enum: ['text', 'image', 'hero', 'about', 'services', 'counter', 'contact'],
+      enum: ['text', 'image', 'hero', 'about', 'services', 'counter', 'contact', 'action', 'why-choose-us', 'banner', 'features', 'projects', 'brand', 'blog'],
       default: 'text'
     }
   }],

@@ -1,6 +1,6 @@
 'use client'
 import Link from "next/link"
-import TestimonialSlider4 from '@/components/slider/TestimonialSlider4'
+import DynamicTestimonials from '@/components/sections/testimonials/DynamicTestimonials'
 import BrandSlider2 from '@/components/slider/BrandSlider2'
 import Layout from "@/components/layout/Layout"
 import CounterUp from "@/components/elements/CounterUp"
@@ -124,7 +124,7 @@ export default function Home() {
                                 Working With Us</h2>
                         </div>
 
-                        <TestimonialSlider4/>
+                        <DynamicTestimonials/>
                         {/*If we need navigation buttons */}
                         
                     </div>
