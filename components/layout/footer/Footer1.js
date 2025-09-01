@@ -33,9 +33,6 @@ export default function Footer1() {
     const contactSection = getSectionByType('contact');
     const socialSection = getSectionByType('social');
 
-    if (loading) {
-        return <div>Loading...</div>;
-    }
 
     return (
         <>

@@ -52,7 +52,7 @@ export default function BannersPage() {
     formData.append('image', file);
 
     try {
-      const response = await fetch('/api/upload/banner', { 
+      const response = await fetch('/api/upload', { 
         method: 'POST', 
         body: formData 
       });
