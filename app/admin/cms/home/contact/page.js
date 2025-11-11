@@ -3,6 +3,45 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
 
+const inputStyle = {
+  width: '100%',
+  padding: '12px',
+  border: '1px solid #d1d5db',
+  borderRadius: '8px',
+  fontSize: '14px'
+};
+
+const textareaStyle = {
+  ...inputStyle,
+  minHeight: '96px',
+  resize: 'vertical'
+};
+
+function Label({ children }) {
+  return (
+    <span style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#374151' }}>
+      {children}
+    </span>
+  );
+}
+
+function Field({ label, helper, value, onChange }) {
+  return (
+    <div>
+      <Label>{label}</Label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={inputStyle}
+      />
+      {helper ? (
+        <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#6b7280' }}>{helper}</p>
+      ) : null}
+    </div>
+  );
+}
+
 export default function ContactPage() {
   const [contactData, setContactData] = useState({
     formTitle: 'WE READY TO HELP',
@@ -137,21 +176,25 @@ export default function ContactPage() {
 
   return (
     <AdminLayout title="Contact Section Management">
-      <div style={{ 
-        background: '#fff', 
-        borderRadius: '16px', 
-        padding: '32px', 
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-        width: '100%'
-      }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          marginBottom: '32px',
-          paddingBottom: '16px',
-          borderBottom: '1px solid #e5e7eb'
-        }}>
+      <div
+        style={{
+          background: '#fff',
+          borderRadius: '16px',
+          padding: '32px',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          width: '100%'
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '32px',
+            paddingBottom: '16px',
+            borderBottom: '1px solid #e5e7eb'
+          }}
+        >
           <div>
             <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: '#111827' }}>
               Contact Section Content
@@ -160,15 +203,15 @@ export default function ContactPage() {
               Manage the content displayed in the Contact section of your home page
             </p>
           </div>
-          <button 
-            onClick={handleSubmit} 
+          <button
+            onClick={handleSubmit}
             disabled={saving}
-            style={{ 
-              background: saving ? '#9ca3af' : 'linear-gradient(135deg, #3b82f6, #1d4ed8)', 
-              color: '#fff', 
-              border: 'none', 
-              padding: '12px 24px', 
-              borderRadius: '8px', 
+            style={{
+              background: saving ? '#9ca3af' : 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+              color: '#fff',
+              border: 'none',
+              padding: '12px 24px',
+              borderRadius: '8px',
               cursor: saving ? 'not-allowed' : 'pointer',
               fontSize: '14px',
               fontWeight: '600',
@@ -180,119 +223,38 @@ export default function ContactPage() {
         </div>
 
         <div style={{ display: 'grid', gap: '24px' }}>
-          {/* Form Title */}
-          <div>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '8px', 
-              fontWeight: '600', 
-              color: '#374151' 
-            }}>
-              Form Title (Small Text)
-            </label>
-            <input
-              type="text"
-              value={contactData.formTitle}
-              onChange={(e) => handleInputChange('formTitle', e.target.value)}
-              placeholder="e.g., WE READY TO HELP"
-              style={{ 
-                width: '100%', 
-                padding: '12px', 
-                border: '1px solid #d1d5db', 
-                borderRadius: '8px',
-                fontSize: '14px'
-              }}
-            />
-            <p style={{ 
-              margin: '4px 0 0 0', 
-              fontSize: '12px', 
-              color: '#6b7280' 
-            }}>
-              This appears as the small text above the main form heading
-            </p>
-          </div>
+          <Field
+            label="Form Title (Small Text)"
+            helper="This appears as the small text above the main form heading"
+            value={contactData.formTitle}
+            onChange={(value) => handleInputChange('formTitle', value)}
+          />
 
-          {/* Form Subtitle */}
-          <div>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '8px', 
-              fontWeight: '600', 
-              color: '#374151' 
-            }}>
-              Form Subtitle (Main Heading)
-            </label>
-            <input
-              type="text"
-              value={contactData.formSubtitle}
-              onChange={(e) => handleInputChange('formSubtitle', e.target.value)}
-              placeholder="e.g., Have Any Question?"
-              style={{ 
-                width: '100%', 
-                padding: '12px', 
-                border: '1px solid #d1d5db', 
-                borderRadius: '8px',
-                fontSize: '14px'
-              }}
-            />
-            <p style={{ 
-              margin: '4px 0 0 0', 
-              fontSize: '12px', 
-              color: '#6b7280' 
-            }}>
-              This appears as the main heading for the contact form
-            </p>
-          </div>
+          <Field
+            label="Form Subtitle (Main Heading)"
+            helper="This appears as the main heading for the contact form"
+            value={contactData.formSubtitle}
+            onChange={(value) => handleInputChange('formSubtitle', value)}
+          />
 
-          {/* Submit Button Text */}
-          <div>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '8px', 
-              fontWeight: '600', 
-              color: '#374151' 
-            }}>
-              Submit Button Text
-            </label>
-            <input
-              type="text"
-              value={contactData.submitButtonText}
-              onChange={(e) => handleInputChange('submitButtonText', e.target.value)}
-              placeholder="e.g., SEND YOUR MESSAGE"
-              style={{ 
-                width: '100%', 
-                padding: '12px', 
-                border: '1px solid #d1d5db', 
-                borderRadius: '8px',
-                fontSize: '14px'
-              }}
-            />
-            <p style={{ 
-              margin: '4px 0 0 0', 
-              fontSize: '12px', 
-              color: '#6b7280' 
-            }}>
-              Text displayed on the form submit button
-            </p>
-          </div>
+          <Field
+            label="Submit Button Text"
+            helper="Text displayed on the form submit button"
+            value={contactData.submitButtonText}
+            onChange={(value) => handleInputChange('submitButtonText', value)}
+          />
 
-          {/* Background Image */}
           <div>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '8px', 
-              fontWeight: '600', 
-              color: '#374151' 
-            }}>
-              Background Image
-            </label>
-            <div style={{ 
-              background: '#f8f9fa', 
-              padding: '12px', 
-              borderRadius: '8px', 
-              marginBottom: '8px',
-              border: '1px solid #e9ecef'
-            }}>
+            <Label>Background Image</Label>
+            <div
+              style={{
+                background: '#f8f9fa',
+                padding: '12px',
+                borderRadius: '8px',
+                marginBottom: '8px',
+                border: '1px solid #e9ecef'
+              }}
+            >
               <strong>📏 Recommended Size:</strong> 1920×1080 pixels (Full background)
               <br />
               <small style={{ color: '#6c757d' }}>
@@ -305,118 +267,81 @@ export default function ContactPage() {
               type="file"
               accept="image/*"
               onChange={(e) => handleImageUpload(e, 'backgroundImage')}
-              style={{ 
-                width: '100%', 
-                padding: '12px', 
-                border: '1px solid #d1d5db', 
-                borderRadius: '8px',
-                fontSize: '14px'
-              }}
+              style={inputStyle}
             />
             {contactData.backgroundImage && (
               <div style={{ marginTop: '8px' }}>
-                <img 
-                  src={contactData.backgroundImage} 
-                  alt="Background preview" 
-                  style={{ 
-                    maxWidth: '200px', 
-                    height: 'auto', 
+                <img
+                  src={contactData.backgroundImage}
+                  alt="Background preview"
+                  style={{
+                    maxWidth: '200px',
+                    height: 'auto',
                     borderRadius: '4px',
                     border: '1px solid #e5e7eb'
-                  }} 
+                  }}
                 />
               </div>
             )}
           </div>
 
-          
-
-          {/* Counter 1 */}
-          <div>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '8px', 
-              fontWeight: '600', 
-              color: '#374151' 
-            }}>
-              Counter 1 - Number
-            </label>
-            <Input
-              label="Counter 1 - Number"
+          <div style={{ display: 'grid', gap: '12px' }}>
+            <Label>Counter 1</Label>
+            <input
               type="number"
               value={contactData.counter1.number}
-              onChange={(e) => setContactData(prev => ({
-                ...prev,
-                counter1: { ...prev.counter1, number: parseInt(e.target.value) || 0 }
-              }))}
+              onChange={(e) =>
+                setContactData((prev) => ({
+                  ...prev,
+                  counter1: { ...prev.counter1, number: parseInt(e.target.value, 10) || 0 }
+                }))
+              }
               placeholder="e.g., 48"
+              style={inputStyle}
             />
-            <p style={{ 
-              margin: '4px 0 0 0', 
-              fontSize: '12px', 
-              color: '#6b7280' 
-            }}>
-              The number that will be displayed with the "+" symbol
-            </p>
+            <textarea
+              value={contactData.counter1.text}
+              onChange={(e) =>
+                setContactData((prev) => ({
+                  ...prev,
+                  counter1: { ...prev.counter1, text: e.target.value }
+                }))
+              }
+              placeholder="e.g., Designers and developers"
+              rows={2}
+              style={textareaStyle}
+            />
+            <small style={{ color: '#6b7280' }}>Description text that appears below the counter number</small>
           </div>
 
-          <Textarea
-            label="Counter 1 - Description Text"
-            value={contactData.counter1.text}
-            onChange={(e) => setContactData(prev => ({
-              ...prev,
-              counter1: { ...prev.counter1, text: e.target.value }
-            }))}
-            placeholder="e.g., Designers and developers"
-            rows={2}
-          />
-          <p style={{ 
-            margin: '4px 0 0 0', 
-            fontSize: '12px', 
-            color: '#6b7280' 
-          }}>
-              Description text that appears below the counter number
-            </p>
-          </div>
-
-          {/* Counter 2 */}
-          <div>
-            <Input
-              label="Counter 2 - Number"
+          <div style={{ display: 'grid', gap: '12px' }}>
+            <Label>Counter 2</Label>
+            <input
               type="number"
               value={contactData.counter2.number}
-              onChange={(e) => setContactData(prev => ({
-                ...prev,
-                counter2: { ...prev.counter2, number: parseInt(e.target.value) || 0 }
-              }))}
+              onChange={(e) =>
+                setContactData((prev) => ({
+                  ...prev,
+                  counter2: { ...prev.counter2, number: parseInt(e.target.value, 10) || 0 }
+                }))
+              }
               placeholder="e.g., 256"
+              style={inputStyle}
             />
-            <p style={{ 
-              margin: '4px 0 0 0', 
-              fontSize: '12px', 
-              color: '#6b7280' 
-            }}>
-              The number that will be displayed with the "+" symbol
-            </p>
+            <textarea
+              value={contactData.counter2.text}
+              onChange={(e) =>
+                setContactData((prev) => ({
+                  ...prev,
+                  counter2: { ...prev.counter2, text: e.target.value }
+                }))
+              }
+              placeholder="e.g., Awards for digital art work"
+              rows={2}
+              style={textareaStyle}
+            />
+            <small style={{ color: '#6b7280' }}>Description text that appears below the counter number</small>
           </div>
-
-          <Textarea
-            label="Counter 2 - Description Text"
-            value={contactData.counter2.text}
-            onChange={(e) => setContactData(prev => ({
-              ...prev,
-              counter2: { ...prev.counter2, text: e.target.value }
-            }))}
-            placeholder="e.g., Awards for digital art work"
-            rows={2}
-          />
-          <p style={{ 
-            margin: '4px 0 0 0', 
-            fontSize: '12px', 
-            color: '#6b7280' 
-          }}>
-            Description text that appears below the counter number
-          </p>
         </div>
       </div>
     </AdminLayout>

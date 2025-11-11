@@ -108,13 +108,16 @@ export default function FooterAdminPage() {
       }
       if (bottomRes.ok) {
         const j = await bottomRes.json(); const p = parseContent(j?.content)
-        setBottomSection({ line1: p?.line1 || bottomSection.line1, line2: p?.line2 || bottomSection.line2 })
+        setBottomSection(prev => ({
+          line1: p?.line1 || j?.title?.en || prev.line1,
+          line2: p?.line2 || j?.subtitle?.en || prev.line2
+        }))
       }
     } finally { setLoading(false) }
   }
 
   const uploadLogo = async (file) => {
-    const fd = new FormData(); fd.append('file', file)
+    const fd = new FormData(); fd.append('image', file)
     const res = await fetch('/api/upload', { method: 'POST', body: fd })
     if (!res.ok) throw new Error('Upload failed')
     const j = await res.json(); return j?.url || ''
