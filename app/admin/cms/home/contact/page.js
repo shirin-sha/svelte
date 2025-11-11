@@ -341,15 +341,21 @@ export default function ContactPage() {
             }}>
               Counter 1 - Number
             </label>
-            <Input
-              label="Counter 1 - Number"
+            <input
               type="number"
               value={contactData.counter1.number}
               onChange={(e) => setContactData(prev => ({
                 ...prev,
-                counter1: { ...prev.counter1, number: parseInt(e.target.value) || 0 }
+                counter1: { ...prev.counter1, number: Number.parseInt(e.target.value, 10) || 0 }
               }))}
               placeholder="e.g., 48"
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
             />
             <p style={{ 
               margin: '4px 0 0 0', 
@@ -359,37 +365,66 @@ export default function ContactPage() {
               The number that will be displayed with the "+" symbol
             </p>
           </div>
-
-          <Textarea
-            label="Counter 1 - Description Text"
-            value={contactData.counter1.text}
-            onChange={(e) => setContactData(prev => ({
-              ...prev,
-              counter1: { ...prev.counter1, text: e.target.value }
-            }))}
-            placeholder="e.g., Designers and developers"
-            rows={2}
-          />
-          <p style={{ 
-            margin: '4px 0 0 0', 
-            fontSize: '12px', 
-            color: '#6b7280' 
-          }}>
+          
+          <div>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '8px', 
+              fontWeight: '600', 
+              color: '#374151'
+            }}>
+              Counter 1 - Description Text
+            </label>
+            <textarea
+              value={contactData.counter1.text}
+              onChange={(e) => setContactData(prev => ({
+                ...prev,
+                counter1: { ...prev.counter1, text: e.target.value }
+              }))}
+              placeholder="e.g., Designers and developers"
+              rows={2}
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+            />
+            <p style={{ 
+              margin: '4px 0 0 0', 
+              fontSize: '12px', 
+              color: '#6b7280' 
+            }}>
               Description text that appears below the counter number
             </p>
           </div>
 
           {/* Counter 2 */}
           <div>
-            <Input
-              label="Counter 2 - Number"
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '8px', 
+              fontWeight: '600', 
+              color: '#374151' 
+            }}>
+              Counter 2 - Number
+            </label>
+            <input
               type="number"
               value={contactData.counter2.number}
               onChange={(e) => setContactData(prev => ({
                 ...prev,
-                counter2: { ...prev.counter2, number: parseInt(e.target.value) || 0 }
+                counter2: { ...prev.counter2, number: Number.parseInt(e.target.value, 10) || 0 }
               }))}
               placeholder="e.g., 256"
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
             />
             <p style={{ 
               margin: '4px 0 0 0', 
@@ -400,25 +435,43 @@ export default function ContactPage() {
             </p>
           </div>
 
-          <Textarea
-            label="Counter 2 - Description Text"
-            value={contactData.counter2.text}
-            onChange={(e) => setContactData(prev => ({
-              ...prev,
-              counter2: { ...prev.counter2, text: e.target.value }
-            }))}
-            placeholder="e.g., Awards for digital art work"
-            rows={2}
-          />
-          <p style={{ 
-            margin: '4px 0 0 0', 
-            fontSize: '12px', 
-            color: '#6b7280' 
-          }}>
-            Description text that appears below the counter number
-          </p>
+          <div>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '8px', 
+              fontWeight: '600', 
+              color: '#374151'
+            }}>
+              Counter 2 - Description Text
+            </label>
+            <textarea
+              value={contactData.counter2.text}
+              onChange={(e) => setContactData(prev => ({
+                ...prev,
+                counter2: { ...prev.counter2, text: e.target.value }
+              }))}
+              placeholder="e.g., Awards for digital art work"
+              rows={2}
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #d1d5db',
+                border: '1px solid #d1d5db',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+            />
+            <p style={{ 
+              margin: '4px 0 0 0', 
+              fontSize: '12px', 
+              color: '#6b7280' 
+            }}>
+              Description text that appears below the counter number
+            </p>
+          </div>
         </div>
       </div>
     </AdminLayout>
   );
-} 
+}
