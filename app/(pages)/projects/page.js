@@ -31,7 +31,7 @@ export default function ProjectsPage() {
 
     return (
         <>
-            <Layout headerStyle={4} footerStyle={1} breadcrumbTitle="Our Projects">
+            <Layout headerStyle={2} footerStyle={1} breadcrumbTitle="Our Projects">
                 <div>
                     {/*Start Project Three */}
                     <section className="project-three project-three--project">

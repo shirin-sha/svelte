@@ -28,32 +28,14 @@ export async function GET(req, { params }) {
   }
 }
 
-const prettifySlug = (slug) => {
-  if (!slug) return 'Page'
-  return slug
-    .split('-')
-    .filter(Boolean)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ') || 'Page'
-}
-
 export async function PUT(req, { params }) {
   try {
     await dbConnect();
     const { slug, section } = params;
     const body = await req.json();
 
-    let page = await Page.findOne({ slug });
-    if (!page) {
-      const prettyName = prettifySlug(slug);
-      page = new Page({
-        name: prettyName,
-        slug,
-        metaTitle: { en: `${prettyName}`, ar: '' },
-        metaDescription: { en: `Content for ${prettyName}`, ar: '' },
-        sections: []
-      });
-    }
+    const page = await Page.findOne({ slug });
+    if (!page) return NextResponse.json({ error: 'Page not found' }, { status: 404 });
 
     const idx = page.sections.findIndex(s => s.name === section);
     if (idx === -1) {
@@ -76,12 +58,10 @@ export async function PUT(req, { params }) {
       return NextResponse.json(newSection);
     }
 
-    const current = typeof page.sections[idx].toObject === 'function'
-      ? page.sections[idx].toObject()
-      : page.sections[idx];
-
-    const updatedSection = { ...current, ...body, updatedAt: new Date() };
-    page.sections[idx] = updatedSection;
+    const updatedSection = { ...page.sections[idx]._doc, ...body, updatedAt: new Date() };
+    // Replace to ensure Mongoose change detection on nested arrays
+    page.sections.splice(idx, 1);
+    page.sections.push(updatedSection);
     page.markModified('sections');
     await page.save();
 
