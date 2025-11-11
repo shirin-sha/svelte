@@ -2,13 +2,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
+import { Input, Textarea } from '@/components/forms';
 
 export default function BannersPage() {
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingBanner, setEditingBanner] = useState(null);
-  const [formData, setFormData] = useState({ title: '', subtitle: '', imageUrl: '' });
+  const [formData, setFormData] = useState({ title: '', subtitle: '', imageUrl: '', primaryText: '', primaryUrl: '', secondaryText: '', secondaryVideoId: '' });
   const [selectedFile, setSelectedFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -97,7 +98,7 @@ export default function BannersPage() {
       
       if (response.ok) {
         // Reset form
-        setFormData({ title: '', subtitle: '', imageUrl: '' });
+        setFormData({ title: '', subtitle: '', imageUrl: '', primaryText: '', primaryUrl: '', secondaryText: '', secondaryVideoId: '' });
         setSelectedFile(null);
         setImagePreview('');
         setShowForm(false);
@@ -120,7 +121,11 @@ export default function BannersPage() {
     setFormData({
       title: banner.title,
       subtitle: banner.subtitle || '',
-      imageUrl: banner.imageUrl
+      imageUrl: banner.imageUrl,
+      primaryText: banner.primaryText || '',
+      primaryUrl: banner.primaryUrl || '',
+      secondaryText: banner.secondaryText || '',
+      secondaryVideoId: banner.secondaryVideoId || ''
     });
     setImagePreview(banner.imageUrl);
     setSelectedFile(null);
@@ -144,7 +149,7 @@ export default function BannersPage() {
   };
 
   const resetForm = () => {
-    setFormData({ title: '', subtitle: '', imageUrl: '' });
+    setFormData({ title: '', subtitle: '', imageUrl: '', primaryText: '', primaryUrl: '', secondaryText: '', secondaryVideoId: '' });
     setSelectedFile(null);
     setImagePreview('');
     setEditingBanner(null);
@@ -169,24 +174,52 @@ export default function BannersPage() {
         <div style={{ background: '#fff', padding: 24, borderRadius: 8, marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
           <h3>{editingBanner ? 'Edit Banner' : 'Add New Banner'}</h3>
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Title:</label>
-              <input 
-                type="text" 
-                value={formData.title} 
-                onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                required
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+            <Input
+              label="Title"
+              value={formData.title}
+              onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              required
+            />
+            
+            <Textarea
+              label="Subtitle"
+              value={formData.subtitle}
+              onChange={e => setFormData(prev => ({ ...prev, subtitle: e.target.value }))}
+              required
+              rows={3}
+            />
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <Input
+                label="Primary Button Text"
+                value={formData.primaryText}
+                onChange={e => setFormData(prev => ({ ...prev, primaryText: e.target.value }))}
+                placeholder="e.g., Discover More"
+                style={{ marginBottom: 0 }}
+              />
+              <Input
+                label="Primary Button URL"
+                value={formData.primaryUrl}
+                onChange={e => setFormData(prev => ({ ...prev, primaryUrl: e.target.value }))}
+                placeholder="e.g., /contact"
+                style={{ marginBottom: 0 }}
               />
             </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Subtitle:</label>
-              <input 
-                type="text" 
-                value={formData.subtitle} 
-                onChange={e => setFormData(prev => ({ ...prev, subtitle: e.target.value }))}
-                required
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <Input
+                label="Secondary (Play) Text"
+                value={formData.secondaryText}
+                onChange={e => setFormData(prev => ({ ...prev, secondaryText: e.target.value }))}
+                placeholder="e.g., Watch Video"
+                style={{ marginBottom: 0 }}
+              />
+              <Input
+                label="Secondary Video ID (YouTube)"
+                value={formData.secondaryVideoId}
+                onChange={e => setFormData(prev => ({ ...prev, secondaryVideoId: e.target.value }))}
+                placeholder="e.g., vfhzo499OeA"
+                style={{ marginBottom: 0 }}
               />
             </div>
             <div style={{ marginBottom: 16 }}>

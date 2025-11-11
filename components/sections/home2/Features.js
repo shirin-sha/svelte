@@ -20,24 +20,29 @@ export default function Features() {
                 } catch (_) {
                     parsed = null
                 }
-                const dynamicItems = parsed?.items || [
-                    { title: 'Creative Solution', iconClass: 'icon-solution' },
-                    { title: 'Minimal Architect', iconClass: 'icon-blueprint' },
-                    { title: 'Redesign Dream', iconClass: 'icon-office-building' }
-                ]
+                const dynamicItems = (parsed?.items || [
+                    { title: 'Creative Design', subtitle: 'Tailored concepts that reflect your brand and lifestyle.', iconClass: 'fas fa-drafting-compass', link: '/about' },
+                    { title: 'Expert Fit-Out', subtitle: 'Quality craftsmanship with rigorous QA/QC at every stage.', iconClass: 'fas fa-tools', link: '/service' },
+                    { title: 'On-Time Delivery', subtitle: 'Clear schedules, proactive, zero surprises.', iconClass: 'fas fa-calendar-check', link: '/projects' }
+                ]).map(item => ({
+                    title: item.title || '',
+                    subtitle: item.subtitle || '',
+                    iconClass: item.iconClass || 'fas fa-circle',
+                    link: item.link || '#'
+                }))
                 setItems(dynamicItems.slice(0, 6))
             } else {
                 setItems([
-                    { title: 'Creative Solution', iconClass: 'icon-solution' },
-                    { title: 'Minimal Architect', iconClass: 'icon-blueprint' },
-                    { title: 'Redesign Dream', iconClass: 'icon-office-building' }
+                    { title: 'Creative Design', subtitle: 'Tailored concepts that reflect your brand and lifestyle.', iconClass: 'fas fa-drafting-compass', link: '/about' },
+                    { title: 'Expert Fit-Out', subtitle: 'Quality craftsmanship with rigorous QA/QC at every stage.', iconClass: 'fas fa-tools', link: '/service' },
+                    { title: 'On-Time Delivery', subtitle: 'Clear schedules, proactive, zero surprises.', iconClass: 'fas fa-calendar-check', link: '/projects' }
                 ])
             }
         } catch (e) {
             setItems([
-                { title: 'Creative Solution', iconClass: 'icon-solution' },
-                { title: 'Minimal Architect', iconClass: 'icon-blueprint' },
-                { title: 'Redesign Dream', iconClass: 'icon-office-building' }
+                { title: 'Creative Design', subtitle: 'Tailored concepts that reflect your brand and lifestyle.', iconClass: 'fas fa-drafting-compass', link: '/about' },
+                { title: 'Expert Fit-Out', subtitle: 'Quality craftsmanship with rigorous QA/QC at every stage.', iconClass: 'fas fa-tools', link: '/service' },
+                { title: 'On-Time Delivery', subtitle: 'Clear schedules, proactive, zero surprises.', iconClass: 'fas fa-calendar-check', link: '/projects' }
             ])
         } finally {
             setLoading(false)
@@ -75,28 +80,23 @@ export default function Features() {
 
     return (
         <>
-            <section className="feauture-one">
+       <section className="feauture-one">
                 <div className="container">
                     <div className="row">
-                        {items.map((item, index) => (
-                            <div
-                                key={`${item.title}-${index}`}
-                                className={`col-xl-4 col-lg-4 wow ${index % 2 === 0 ? 'fadeInLeft' : 'fadeInRight'}`}
-                                data-wow-delay={`${index * 100}ms`}
-                                data-wow-duration="1500ms"
-                            >
-                                <div className="feauture-one__single">
-                                    <div className="feauture-one__single-text">
-                                        <p>EXPLORE FEATURE</p>
-                                        <h2><a href="#">{item.title}</a></h2>
+                        {items.map((item, idx) => (
+                            <div className={`col-xl-4 col-lg-4 wow ${idx % 2 === 0 ? 'fadeInLeft' : 'fadeInRight'}`} data-wow-delay={`${idx * 100}ms`} data-wow-duration="1500ms" key={idx}>
+                            <div className="feauture-one__single">
+                                <div className="feauture-one__single-text">
+                                        <p>{item.title}</p>
+                                        <h2><a href="#" style={{ whiteSpace: 'pre-line' }}>{(item.subtitle || '').replace(/\\n/g, '\n')}</a></h2>
                                     </div>
-                                    <div className="feauture-one__single-bottom">
-                                        <div className="btn-box">
-                                            <a href="#"><span className="icon-plus"></span></a>
-                                        </div>
-                                        <div className="icon-box">
+                                <div className="feauture-one__single-bottom">
+                                    <div className="btn-box">
+                                            <a href={item.link || '#'}><span className="icon-plus"></span></a>
+                                    </div>
+                                    <div className="icon-box">
                                             <span className={item.iconClass}></span>
-                                        </div>
+                                    </div>
                                     </div>
                                 </div>
                             </div>

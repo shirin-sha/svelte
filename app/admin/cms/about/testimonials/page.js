@@ -1,99 +1,186 @@
 'use client'
 import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
+import { Input, Textarea } from '@/components/forms';
 
 export default function TestimonialsPage() {
-  const [testimonials, setTestimonials] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    position: '',
-    company: '',
-    image: '',
-    testimonial: '',
-    rating: 5,
-    isActive: true,
-    order: 0
+  const [loading, setLoading] = useState(false);
+  const [sectionData, setSectionData] = useState({
+    subtitle: '',
+    title: '',
+    description: ''
+  });
+  // Why Choose Svelte section
+  const [whyChooseItems, setWhyChooseItems] = useState([]);
+  const [editingWhyChooseId, setEditingWhyChooseId] = useState(null);
+  const [whyChooseFormData, setWhyChooseFormData] = useState({
+    icon: '',
+    title: '',
+    description: ''
   });
 
   useEffect(() => {
-    fetchTestimonials();
+    fetchSectionData();
+    fetchWhyChooseItems();
   }, []);
 
-  const fetchTestimonials = async () => {
+  const fetchWhyChooseItems = async () => {
     try {
-      const response = await fetch('/api/content/testimonials');
-      const data = await response.json();
-      if (data.success) {
-        setTestimonials(data.data);
+      const response = await fetch('/api/content/pages/about/sections/why-choose-us');
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.features && Array.isArray(data.features)) {
+          setWhyChooseItems(data.features);
+        } else {
+          setWhyChooseItems([]);
+        }
       }
     } catch (error) {
-      console.error('Error fetching testimonials:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error fetching why choose items:', error);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
+  const fetchSectionData = async () => {
     try {
-      const url = editingId 
-        ? `/api/content/testimonials/${editingId}`
-        : '/api/content/testimonials';
-      
-      const method = editingId ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
+      const response = await fetch('/api/content/pages/about/sections/testimonials');
+      if (response.ok) {
+        const data = await response.json();
+        if (data) {
+          setSectionData({
+            subtitle: data.subtitle?.en || '',
+            title: data.title?.en || '',
+            description: data.description?.en || ''
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching section data:', error);
+    }
+  };
+
+  const handleSectionSave = async () => {
+    try {
+      const payload = {
+        title: {
+          en: sectionData.title || ''
+        },
+        subtitle: {
+          en: sectionData.subtitle || ''
+        },
+        description: {
+          en: sectionData.description || ''
+        }
+      };
+
+      const response = await fetch('/api/content/pages/about/sections/testimonials', {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
       
-      const data = await response.json();
-      if (data.success) {
-        await fetchTestimonials();
-        resetForm();
+      const responseData = await response.json();
+
+      if (response.ok) {
+        alert('Section settings saved successfully!');
+        // Reload the data
+        await fetchSectionData();
+      } else {
+        console.error('API Error:', responseData);
+        const errorMsg = responseData.message || responseData.error || 'Unknown error';
+        alert(`Failed to save section settings: ${errorMsg}`);
       }
     } catch (error) {
-      console.error('Error saving testimonial:', error);
+      console.error('Error saving section data:', error);
+      alert(`Failed to save section settings: ${error.message || 'Network error'}`);
     }
   };
 
-  const handleEdit = (testimonial) => {
-    setEditingId(testimonial._id);
-    setFormData(testimonial);
-  };
 
-  const handleDelete = async (id) => {
-    if (confirm('Are you sure you want to delete this testimonial?')) {
-      try {
-        const response = await fetch(`/api/content/testimonials/${id}`, {
-          method: 'DELETE'
-        });
-        
-        const data = await response.json();
-        if (data.success) {
-          await fetchTestimonials();
-        }
-      } catch (error) {
-        console.error('Error deleting testimonial:', error);
+  // Why Choose Svelte handlers
+  const handleWhyChooseSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      let updatedFeatures;
+      
+      if (editingWhyChooseId) {
+        // Update existing item
+        updatedFeatures = whyChooseItems.map((item, index) => 
+          index === editingWhyChooseId 
+            ? { icon: whyChooseFormData.icon, title: whyChooseFormData.title, description: whyChooseFormData.description }
+            : item
+        );
+      } else {
+        // Add new item
+        updatedFeatures = [...whyChooseItems, {
+          icon: whyChooseFormData.icon,
+          title: whyChooseFormData.title,
+          description: whyChooseFormData.description
+        }];
       }
+
+      const response = await fetch('/api/content/pages/about/sections/why-choose-us', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          features: updatedFeatures
+        })
+      });
+
+      if (response.ok) {
+        await fetchWhyChooseItems();
+        resetWhyChooseForm();
+        alert('Why Choose Svelte item saved successfully!');
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to save: ${errorData.error || errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error saving why choose item:', error);
+      alert(`Failed to save why choose item: ${error.message}`);
     }
   };
 
-  const resetForm = () => {
-    setEditingId(null);
-    setFormData({
-      name: '',
-      position: '',
-      company: '',
-      image: '',
-      testimonial: '',
-      rating: 5,
-      isActive: true,
-      order: 0
+  const handleWhyChooseEdit = (item, index) => {
+    setEditingWhyChooseId(index);
+    setWhyChooseFormData({
+      icon: item.icon || '',
+      title: item.title || '',
+      description: item.description || ''
+    });
+  };
+
+  const handleWhyChooseDelete = async (index) => {
+    if (!confirm('Are you sure you want to delete this item?')) return;
+    
+    try {
+      const updatedItems = whyChooseItems.filter((_, i) => i !== index);
+      const response = await fetch('/api/content/pages/about/sections/why-choose-us', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          features: updatedItems
+        })
+      });
+
+      if (response.ok) {
+        await fetchWhyChooseItems();
+        alert('Item deleted successfully!');
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to delete: ${errorData.error || errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      alert(`Failed to delete item: ${error.message}`);
+    }
+  };
+
+  const resetWhyChooseForm = () => {
+    setEditingWhyChooseId(null);
+    setWhyChooseFormData({
+      icon: '',
+      title: '',
+      description: ''
     });
   };
 
@@ -110,283 +197,179 @@ export default function TestimonialsPage() {
   return (
     <AdminLayout>
       <div className="p-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {editingId ? 'Edit Testimonial' : 'Add New Testimonial'}
-          </h1>
-          <p className="text-gray-600">Manage client testimonials for the about page</p>
+        {/* Section Title Management */}
+        <div style={{ background: '#fff', padding: 24, borderRadius: 8, marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <h2 style={{ marginBottom: 24 }}>Testimonials Section Settings</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <Input
+              label="Small Title (Subtitle)"
+              value={sectionData.subtitle}
+              onChange={(e) => setSectionData(prev => ({ ...prev, subtitle: e.target.value }))}
+              style={{ marginBottom: 0 }}
+            />
+            <Input
+              label="Main Title"
+              value={sectionData.title}
+              onChange={(e) => setSectionData(prev => ({ ...prev, title: e.target.value }))}
+              style={{ marginBottom: 0 }}
+            />
+          </div>
+          <Textarea
+            label="Description"
+            value={sectionData.description}
+            onChange={(e) => setSectionData(prev => ({ ...prev, description: e.target.value }))}
+            rows={3}
+          />
+          <div style={{ marginTop: 16 }}>
+            <button 
+              onClick={handleSectionSave}
+              style={{ 
+                background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', 
+                color: '#fff', 
+                border: 'none', 
+                padding: '12px 24px', 
+                borderRadius: '8px', 
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+              }}
+            >
+              Save Section Settings
+            </button>
+          </div>
         </div>
 
-        {/* Form */}
-     {/* Form */}
-<div style={{ background: '#fff', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', marginBottom: 24 }}>
-
-  
-  <form onSubmit={handleSubmit}>
-    {/* Grid layout like About page */}
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
-      {/* Name */}
-      <div>
-        <label style={{ display: 'block', marginBottom: 8, fontWeight: '500' }}>Name *</label>
-        <input
-          type="text"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          required
-          style={{ width: '100%', padding: 12, border: '1px solid #ddd', borderRadius: 6 }}
-          placeholder="Enter name"
-        />
-      </div>
-
-      {/* Position */}
-      <div>
-        <label style={{ display: 'block', marginBottom: 8, fontWeight: '500' }}>Position *</label>
-        <input
-          type="text"
-          value={formData.position}
-          onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-          required
-          style={{ width: '100%', padding: 12, border: '1px solid #ddd', borderRadius: 6 }}
-          placeholder="Enter position"
-        />
-      </div>
-
-      {/* Company */}
-      <div>
-        <label style={{ display: 'block', marginBottom: 8, fontWeight: '500' }}>Company</label>
-        <input
-          type="text"
-          value={formData.company}
-          onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-          style={{ width: '100%', padding: 12, border: '1px solid #ddd', borderRadius: 6 }}
-          placeholder="Enter company"
-        />
-      </div>
-
-      {/* Image URL */}
-      <div>
-        <label style={{ display: 'block', marginBottom: 8, fontWeight: '500' }}>Image URL *</label>
-        <input
-          type="url"
-          value={formData.image}
-          onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-          required
-          style={{ width: '100%', padding: 12, border: '1px solid #ddd', borderRadius: 6 }}
-          placeholder="https://example.com/photo.jpg"
-        />
-      </div>
-
-      {/* Rating */}
-      <div>
-        <label style={{ display: 'block', marginBottom: 8, fontWeight: '500' }}>Rating</label>
-        <select
-          value={formData.rating}
-          onChange={(e) => setFormData({ ...formData, rating: parseInt(e.target.value) })}
-          style={{ width: '100%', padding: 12, border: '1px solid #ddd', borderRadius: 6 }}
-        >
-          {[1, 2, 3, 4, 5].map(rating => (
-            <option key={rating} value={rating}>{rating} Star{rating > 1 ? 's' : ''}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Order */}
-      <div>
-        <label style={{ display: 'block', marginBottom: 8, fontWeight: '500' }}>Order</label>
-        <input
-          type="number"
-          value={formData.order}
-          onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })}
-          style={{ width: '100%', padding: 12, border: '1px solid #ddd', borderRadius: 6 }}
-          placeholder="0"
-        />
-      </div>
-    </div>
-
-    {/* Testimonial Text - full width */}
-    <div style={{ marginBottom: 20 }}>
-      <label style={{ display: 'block', marginBottom: 8, fontWeight: '500' }}>Testimonial Text *</label>
-      <textarea
-        value={formData.testimonial}
-        onChange={(e) => setFormData({ ...formData, testimonial: e.target.value })}
-        required
-        rows={4}
-        style={{ width: '100%', padding: 12, border: '1px solid #ddd', borderRadius: 6, resize: 'vertical' }}
-        placeholder="Write the testimonial here..."
-      />
-    </div>
-
-    {/* Active Checkbox */}
-    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
-      <input
-        type="checkbox"
-        id="isActive"
-        checked={formData.isActive}
-        onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-        style={{ width: 18, height: 18, marginRight: 8 }}
-      />
-      <label htmlFor="isActive" style={{ fontSize: '14px' }}>Active</label>
-    </div>
-
-    {/* Buttons */}
-    <div style={{ display: 'flex', gap: 12 }}>
-      <button
-        type="submit"
-        style={{
-          background: '#2563eb',
-          color: 'white',
-          border: 'none',
-          padding: '12px 24px',
-          borderRadius: 6,
-          cursor: 'pointer',
-          fontSize: '15px',
-          fontWeight: '500'
-        }}
-      >
-        {editingId ? 'Update Testimonial' : 'Add Testimonial'}
-      </button>
-
-      {editingId && (
-        <button
-          type="button"
-          onClick={resetForm}
-          style={{
-            background: '#6b7280',
-            color: 'white',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: 6,
-            cursor: 'pointer',
-            fontSize: '15px',
-            fontWeight: '500'
-          }}
-        >
-          Cancel Edit
-        </button>
-      )}
-    </div>
-  </form>
-</div>
-
-
-        {/* Testimonials List */}
-        <div style={{ background: '#fff', borderRadius: 8, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-    <thead>
-      <tr style={{ background: '#f9fafb' }}>
-        <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Image</th>
-        <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Name & Company</th>
-        <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Position</th>
-        <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Rating</th>
-        <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Status</th>
-        <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Actions</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      {loading ? (
-        <tr>
-          <td colSpan="6" style={{ padding: 24, textAlign: 'center', color: '#6b7280' }}>
-            Loading testimonials...
-          </td>
-        </tr>
-      ) : testimonials.length === 0 ? (
-        <tr>
-          <td colSpan="6" style={{ padding: 24, textAlign: 'center', color: '#6b7280' }}>
-            No testimonials found.
-          </td>
-        </tr>
-      ) : (
-        testimonials.map((testimonial) => (
-          <tr key={testimonial._id}>
-            {/* Image */}
-            <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
-              {testimonial.imageUrl ? (
-                <img
-                  src={testimonial.imageUrl}
-                  alt={testimonial.name}
-                  style={{ width: 50, height: 50, borderRadius: '50%', objectFit: 'cover' }}
-                />
-              ) : (
-                <div style={{ width: 50, height: 50, borderRadius: '50%', background: '#e5e7eb' }} />
+        {/* Why Choose Svelte Section */}
+        <div style={{ background: '#fff', padding: 24, borderRadius: 8, marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <h2 style={{ marginBottom: 24 }}>Why Choose Svelte</h2>
+          <form onSubmit={handleWhyChooseSubmit}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 2fr', gap: 16, marginBottom: 16 }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: 8, fontWeight: '600', color: '#374151' }}>Icon</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input
+                    type="text"
+                    value={whyChooseFormData.icon}
+                    onChange={(e) => setWhyChooseFormData(prev => ({ ...prev, icon: e.target.value }))}
+                    placeholder="e.g., fas fa-building"
+                    required
+                    style={{ flex: 1, padding: 12, border: '1px solid #d1d5db', borderRadius: 8, fontSize: '14px', fontFamily: 'inherit' }}
+                  />
+                  <i className={whyChooseFormData.icon} style={{ fontSize: 24, width: 32, textAlign: 'center', color: '#6b7280' }} />
+                </div>
+              </div>
+              <Input
+                label="Title"
+                value={whyChooseFormData.title}
+                onChange={(e) => setWhyChooseFormData(prev => ({ ...prev, title: e.target.value }))}
+                required
+                style={{ marginBottom: 0 }}
+              />
+              <Textarea
+                label="Description"
+                value={whyChooseFormData.description}
+                onChange={(e) => setWhyChooseFormData(prev => ({ ...prev, description: e.target.value }))}
+                required
+                rows={2}
+                style={{ marginBottom: 0 }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+              <button
+                type="submit"
+                style={{
+                  background: '#10b981',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600'
+                }}
+              >
+                {editingWhyChooseId ? 'Update Item' : 'Add Item'}
+              </button>
+              {editingWhyChooseId && (
+                <button
+                  type="button"
+                  onClick={resetWhyChooseForm}
+                  style={{
+                    background: '#6b7280',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px 24px',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600'
+                  }}
+                >
+                  Cancel
+                </button>
               )}
-            </td>
+            </div>
+          </form>
 
-            {/* Name & Company */}
-            <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
-              <div style={{ fontWeight: 500, color: '#111827' }}>{testimonial.name}</div>
-              {testimonial.company && (
-                <div style={{ fontSize: 14, color: '#6b7280' }}>{testimonial.company}</div>
-              )}
-            </td>
-
-            {/* Position */}
-            <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb', color: '#374151' }}>
-              {testimonial.position}
-            </td>
-
-            {/* Rating */}
-            <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <span key={i} style={{ color: '#f59e0b', fontSize: 16 }}>★</span>
+          {/* Why Choose Items List */}
+          {whyChooseItems.length > 0 && (
+            <div style={{ marginTop: 24, borderTop: '1px solid #e5e7eb', paddingTop: 24 }}>
+              <h3 style={{ marginBottom: 16 }}>Items List</h3>
+              <div style={{ display: 'grid', gap: 12 }}>
+                {whyChooseItems.map((item, index) => (
+                  <div key={index} style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'auto 1fr 2fr auto', 
+                    gap: 16, 
+                    alignItems: 'center',
+                    padding: 16,
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 8,
+                    background: '#f9fafb'
+                  }}>
+                    <i className={item.icon} style={{ fontSize: 24, color: '#037D88' }} />
+                    <div>
+                      <div style={{ fontWeight: 600, color: '#111827' }}>{item.title}</div>
+                    </div>
+                    <div style={{ fontSize: 14, color: '#374151' }}>{item.description}</div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => handleWhyChooseEdit(item, index)}
+                        style={{
+                          background: '#3b82f6',
+                          color: 'white',
+                          border: 'none',
+                          padding: '6px 12px',
+                          borderRadius: 4,
+                          cursor: 'pointer',
+                          fontSize: '12px'
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleWhyChooseDelete(index)}
+                        style={{
+                          background: '#ef4444',
+                          color: 'white',
+                          border: 'none',
+                          padding: '6px 12px',
+                          borderRadius: 4,
+                          cursor: 'pointer',
+                          fontSize: '12px'
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
-            </td>
+            </div>
+          )}
+        </div>
 
-            {/* Status */}
-            <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
-              <span
-                style={{
-                  display: 'inline-block',
-                  padding: '4px 8px',
-                  borderRadius: 12,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  background: testimonial.isActive ? '#d1fae5' : '#fee2e2',
-                  color: testimonial.isActive ? '#065f46' : '#991b1b'
-                }}
-              >
-                {testimonial.isActive ? 'Active' : 'Inactive'}
-              </span>
-            </td>
-
-            {/* Actions */}
-            <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
-              <button
-                onClick={() => handleEdit(testimonial)}
-                style={{
-                  background: '#3b82f6',
-                  color: 'white',
-                  border: 'none',
-                  padding: '6px 12px',
-                  borderRadius: 4,
-                  marginRight: 8,
-                  cursor: 'pointer'
-                }}
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(testimonial._id)}
-                style={{
-                  background: '#ef4444',
-                  color: 'white',
-                  border: 'none',
-                  padding: '6px 12px',
-                  borderRadius: 4,
-                  cursor: 'pointer'
-                }}
-              >
-                Delete
-              </button>
-            </td>
-          </tr>
-        ))
-      )}
-    </tbody>
-  </table>
-</div>
 
       </div>
     </AdminLayout>

@@ -29,13 +29,90 @@ export async function GET() {
 
     // Filter by section name
     const filteredSections = aboutPage.sections.filter(s => s.name === 'why-choose-us');
-    return NextResponse.json(filteredSections);
+    const section = filteredSections[0];
+    
+    if (section) {
+      return NextResponse.json({
+        features: section.features || []
+      });
+    }
+    
+    return NextResponse.json({ features: [] });
   } catch (error) {
     console.error('Error fetching why choose us section:', error);
     return NextResponse.json(
       { error: 'Failed to fetch why choose us section' },
       { status: 500 }
     );
+  }
+}
+
+export async function PUT(req) {
+  try {
+    await dbConnect();
+    const body = await req.json();
+
+    // Find or create about page
+    let page = await Page.findOne({ slug: 'about' });
+    
+    if (!page) {
+      page = new Page({
+        name: 'About',
+        slug: 'about',
+        metaTitle: { en: 'About' },
+        metaDescription: { en: 'About page' },
+        sections: []
+      });
+    }
+
+    // Ensure sections is an array
+    if (!page.sections || !Array.isArray(page.sections)) {
+      page.sections = [];
+    }
+
+    // Check if why-choose-us section exists
+    const idx = page.sections.findIndex(s => s && s.name === 'why-choose-us');
+    
+    // Prepare updated section with features
+    const updatedSection = {
+      name: 'why-choose-us',
+      title: { en: 'Why Choose Us' },
+      features: body.features || [],
+      isActive: true,
+      order: 3,
+      type: 'why-choose-us',
+      updatedAt: new Date()
+    };
+
+    // If section exists, preserve other fields
+    if (idx !== -1 && page.sections[idx]) {
+      updatedSection.title = page.sections[idx].title || { en: 'Why Choose Us' };
+      updatedSection.isActive = page.sections[idx].isActive !== undefined ? page.sections[idx].isActive : true;
+      updatedSection.order = page.sections[idx].order !== undefined ? page.sections[idx].order : 3;
+      // Remove the old section
+      page.sections.splice(idx, 1);
+    }
+    
+    // Add the updated section
+    page.sections.push(updatedSection);
+
+    // Mark the sections array as modified
+    page.markModified('sections');
+    await page.save();
+
+    // Reload from database
+    const savedPage = await Page.findOne({ slug: 'about' });
+    const whyChooseSection = savedPage.sections.find(s => s && s.name === 'why-choose-us');
+    
+    return NextResponse.json({
+      features: whyChooseSection?.features || []
+    });
+  } catch (error) {
+    console.error('Error updating why choose us section:', error);
+    return NextResponse.json({ 
+      error: 'Failed to update why choose us section',
+      message: error.message
+    }, { status: 500 });
   }
 }
 

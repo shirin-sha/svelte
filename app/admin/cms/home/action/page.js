@@ -245,37 +245,6 @@ export default function ActionPage() {
           </button>
         </form>
 
-        <div style={{ marginTop: 32, padding: 20, background: '#f8f9fa', borderRadius: 6 }}>
-          <h3 style={{ marginBottom: 16 }}>💡 Preview</h3>
-          <div style={{ 
-            background: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(${imagePreview || actionData.backgroundImage || 'assets/img/background/call-to-action-v1-bg.jpg'})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            padding: '60px 20px',
-            borderRadius: 8,
-            textAlign: 'center',
-            color: 'white'
-          }}>
-            <h2 style={{ fontSize: '2.5rem', marginBottom: '16px', fontWeight: '600' }}>{actionData.title}</h2>
-            <h3 style={{ fontSize: '1.5rem', marginBottom: '32px', fontWeight: '400' }}>{actionData.subtitle}</h3>
-            <div>
-              <a 
-                href={actionData.buttonLink} 
-                style={{
-                  background: '#f59e0b',
-                  color: 'white',
-                  padding: '14px 28px',
-                  borderRadius: '6px',
-                  textDecoration: 'none',
-                  fontWeight: '500',
-                  display: 'inline-block'
-                }}
-              >
-                {actionData.buttonText}
-              </a>
-            </div>
-          </div>
-        </div>
       </div>
     </AdminLayout>
   );

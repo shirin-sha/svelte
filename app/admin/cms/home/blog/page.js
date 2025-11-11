@@ -8,6 +8,10 @@ export default function BlogsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingBlog, setEditingBlog] = useState(null);
+  const [sectionData, setSectionData] = useState({
+    subtitle: '',
+    title: ''
+  });
   const [formData, setFormData] = useState({ 
     title: '', 
     content: '', 
@@ -26,6 +30,7 @@ export default function BlogsPage() {
       return;
     }
     fetchBlogs();
+    fetchSectionData();
   }, [router]);
 
   const fetchBlogs = async () => {
@@ -39,6 +44,55 @@ export default function BlogsPage() {
       console.error('Error fetching blogs:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSectionData = async () => {
+    try {
+      const response = await fetch('/api/content/pages/home/sections/blog');
+      if (response.ok) {
+        const section = await response.json();
+        let parsed = null;
+        try {
+          parsed = section?.content?.en ? JSON.parse(section.content.en) : null;
+        } catch (_) {
+          parsed = null;
+        }
+        if (parsed) {
+          setSectionData(prev => ({
+            ...prev,
+            subtitle: parsed.subtitle || prev.subtitle,
+            title: parsed.title || prev.title
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching section data:', error);
+    }
+  };
+
+  const handleSectionSave = async () => {
+    try {
+      const response = await fetch('/api/content/pages/home/sections/blog', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: {
+            en: JSON.stringify({ title: sectionData.title, subtitle: sectionData.subtitle })
+          }
+        })
+      });
+      
+      if (response.ok) {
+        alert('Section settings saved successfully!');
+      } else {
+        const errorData = await response.json();
+        console.error('API Error:', errorData);
+        alert(`Failed to save section settings: ${errorData.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error saving section data:', error);
+      alert('Failed to save section settings: Network error');
     }
   };
 
@@ -134,6 +188,67 @@ export default function BlogsPage() {
 
   return (
     <AdminLayout title="Manage Blogs">
+      {/* Section Title Management */}
+      <div style={{ background: '#fff', padding: 24, borderRadius: 8, marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+        <h2 style={{ marginBottom: 24 }}>News Section Settings</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: 8, fontWeight: '600', color: '#374151' }}>
+              Small Title (Subtitle)
+            </label>
+            <input
+              type="text"
+              value={sectionData.subtitle}
+              onChange={(e) => setSectionData(prev => ({ ...prev, subtitle: e.target.value }))}
+              placeholder="e.g., OUR BLOG POST"
+              style={{ 
+                width: '100%', 
+                padding: '12px', 
+                border: '1px solid #d1d5db', 
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: 8, fontWeight: '600', color: '#374151' }}>
+              Main Title
+            </label>
+            <input
+              type="text"
+              value={sectionData.title}
+              onChange={(e) => setSectionData(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="e.g., Read Our Latest News"
+              style={{ 
+                width: '100%', 
+                padding: '12px', 
+                border: '1px solid #d1d5db', 
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+            />
+          </div>
+        </div>
+        <div style={{ marginTop: 16 }}>
+          <button 
+            onClick={handleSectionSave}
+            style={{ 
+              background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', 
+              color: '#fff', 
+              border: 'none', 
+              padding: '12px 24px', 
+              borderRadius: '8px', 
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '600',
+              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+            }}
+          >
+            Save Section Settings
+          </button>
+        </div>
+      </div>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h2>Blog Posts</h2>
         <button 

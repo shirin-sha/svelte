@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const UserSchema = new mongoose.Schema({
@@ -29,8 +28,7 @@ async function createAdmin() {
       console.error('❌ Admin user with this email already exists');
       process.exit(1);
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
-    await User.create({ email, password: hashedPassword });
+    await User.create({ email, password });
     console.log('✅ Admin user created successfully!');
     console.log(`📧 Email: ${email}`);
     console.log('🔑 You can now login at /admin/login');

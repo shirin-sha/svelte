@@ -1,356 +1,259 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import AdminLayout from '@/components/layout/AdminLayout';
+'use client'
+import { useEffect, useState } from 'react'
+import AdminLayout from '@/components/layout/AdminLayout'
+import { Input, Textarea } from '@/components/forms'
 
-export default function FooterPage() {
-  const [footerSections, setFooterSections] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editingSection, setEditingSection] = useState(null);
-  const [formData, setFormData] = useState({
-    section: 'company',
-    title: '',
-    content: '',
-    links: [],
-    contactInfo: { address: '', phone: '', email: '' },
-    socialLinks: [],
-    order: 0,
-    isActive: true
-  });
-  const router = useRouter();
+export default function FooterAdminPage() {
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    const token = localStorage.getItem('admin_token');
-    if (!token) {
-      router.push('/admin/login');
-      return;
-    }
-    fetchFooterSections();
-  }, [router]);
+  // Section 1: About (logo, about, social links)
+  const [aboutSection, setAboutSection] = useState({
+    logoUrl: '',
+    aboutText: '',
+    socialLinks: [{ label: 'Ln', url: '#' }, { label: 'In', url: '#' }, { label: 'Fb', url: '#' }, { label: 'Bh', url: '#' }]
+  })
 
-  const fetchFooterSections = async () => {
+  // Section 2: Navigation
+  const [navSection, setNavSection] = useState({
+    title: 'Navigation',
+    showAbout: true,
+    showServices: true,
+    showProjects: true,
+    showClients: true,
+    showBlog: true,
+    showContact: true
+  })
+
+  // Section 3: Quick Links
+  const [quickSection, setQuickSection] = useState({
+    title: 'Quick Link',
+    showQuote: true,
+    showVisit: true,
+    showProfile: true,
+    showHse: true,
+    showPrivacy: true,
+    showTerms: true
+  })
+
+  // Section 4: Newsletter
+  const [newsSection, setNewsSection] = useState({
+    title: 'Newsletter',
+    description: 'Subscribe for design tips, project updates and news from Svelte.',
+    placeholderEmail: 'email@example.com'
+  })
+
+  // Section 5: Bottom text
+  const [bottomSection, setBottomSection] = useState({
+    line1: '© 2025 Svelte Contracting LLC. All rights reserved.',
+    line2: 'Registered in Abu Dhabi, UAE. Trade license available on request.'
+  })
+
+  useEffect(() => { loadAll() }, [])
+
+  const parseContent = (content) => {
+    if (!content || !content.en) return null
+    try { return JSON.parse(content.en) } catch { return null }
+  }
+
+  const loadAll = async () => {
     try {
-      setLoading(true);
-      const response = await fetch('/api/content/footer');
-      if (response.ok) {
-        const data = await response.json();
-        setFooterSections(data);
+      const urls = [
+        '/api/content/pages/footer/sections/about',
+        '/api/content/pages/footer/sections/navigation',
+        '/api/content/pages/footer/sections/quick-links',
+        '/api/content/pages/footer/sections/newsletter',
+        '/api/content/pages/footer/sections/bottom'
+      ]
+      const [aboutRes, navRes, quickRes, newsRes, bottomRes] = await Promise.all(urls.map(u => fetch(u, { cache: 'no-store' })))
+      if (aboutRes.ok) {
+        const j = await aboutRes.json(); const p = parseContent(j?.content)
+        setAboutSection(s => ({
+          logoUrl: p?.logoUrl || s.logoUrl,
+          aboutText: p?.aboutText || s.aboutText,
+          socialLinks: Array.isArray(p?.socialLinks) ? p.socialLinks : s.socialLinks
+        }))
       }
-    } catch (error) {
-      console.error('Error fetching footer sections:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const url = editingSection 
-        ? `/api/content/footer/${editingSection._id}`
-        : '/api/content/footer';
-      const method = editingSection ? 'PUT' : 'POST';
-      const payload = { ...formData };
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (response.ok) {
-        setFormData({
-          section: 'company',
-          title: '',
-          content: '',
-          links: [],
-          contactInfo: { address: '', phone: '', email: '' },
-          socialLinks: [],
-          order: 0,
-          isActive: true
-        });
-        setShowForm(false);
-        setEditingSection(null);
-        fetchFooterSections();
-      } else {
-        alert('Failed to save section');
+      if (navRes.ok) {
+        const j = await navRes.json(); const p = parseContent(j?.content)
+        setNavSection(s => ({
+          title: j?.title?.en || s.title,
+          showAbout: p?.showAbout ?? s.showAbout,
+          showServices: p?.showServices ?? s.showServices,
+          showProjects: p?.showProjects ?? s.showProjects,
+          showClients: p?.showClients ?? s.showClients,
+          showBlog: p?.showBlog ?? s.showBlog,
+          showContact: p?.showContact ?? s.showContact
+        }))
       }
-    } catch (error) {
-      console.error('Error saving footer section:', error);
-      alert('Error saving section');
-    }
-  };
-
-  const handleEdit = (section) => {
-    setEditingSection(section);
-    setFormData({
-      section: section.section,
-      title: section.title,
-      content: section.content,
-      links: section.links || [],
-      contactInfo: section.contactInfo || { address: '', phone: '', email: '' },
-      socialLinks: section.socialLinks || [],
-      order: section.order || 0,
-      isActive: section.isActive
-    });
-    setShowForm(true);
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this footer section?')) return;
-    try {
-      const response = await fetch(`/api/content/footer/${id}`, { method: 'DELETE' });
-      if (response.ok) {
-        fetchFooterSections();
+      if (quickRes.ok) {
+        const j = await quickRes.json(); const p = parseContent(j?.content)
+        setQuickSection(s => ({
+          title: j?.title?.en || s.title,
+          showQuote: p?.showQuote ?? s.showQuote,
+          showVisit: p?.showVisit ?? s.showVisit,
+          showProfile: p?.showProfile ?? s.showProfile,
+          showHse: p?.showHse ?? s.showHse,
+          showPrivacy: p?.showPrivacy ?? s.showPrivacy,
+          showTerms: p?.showTerms ?? s.showTerms
+        }))
       }
-    } catch (error) {
-      console.error('Error deleting footer section:', error);
-      alert('Error deleting section');
-    }
-  };
+      if (newsRes.ok) {
+        const j = await newsRes.json(); const p = parseContent(j?.content)
+        setNewsSection(s => ({
+          title: j?.title?.en || s.title,
+          description: j?.description?.en || s.description,
+          placeholderEmail: p?.placeholderEmail || s.placeholderEmail
+        }))
+      }
+      if (bottomRes.ok) {
+        const j = await bottomRes.json(); const p = parseContent(j?.content)
+        setBottomSection({ line1: p?.line1 || bottomSection.line1, line2: p?.line2 || bottomSection.line2 })
+      }
+    } finally { setLoading(false) }
+  }
 
-  const addLink = () => {
-    setFormData(prev => ({ ...prev, links: [...prev.links, { text: '', url: '' }] }));
-  };
-  const updateLink = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      links: prev.links.map((link, i) => i === index ? { ...link, [field]: value } : link)
-    }));
-  };
-  const removeLink = (index) => {
-    setFormData(prev => ({ ...prev, links: prev.links.filter((_, i) => i !== index) }));
-  };
+  const uploadLogo = async (file) => {
+    const fd = new FormData(); fd.append('file', file)
+    const res = await fetch('/api/upload', { method: 'POST', body: fd })
+    if (!res.ok) throw new Error('Upload failed')
+    const j = await res.json(); return j?.url || ''
+  }
 
-  const addSocialLink = () => {
-    setFormData(prev => ({ ...prev, socialLinks: [...prev.socialLinks, { platform: '', url: '', icon: '' }] }));
-  };
-  const updateSocialLink = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      socialLinks: prev.socialLinks.map((link, i) => i === index ? { ...link, [field]: value } : link)
-    }));
-  };
-  const removeSocialLink = (index) => {
-    setFormData(prev => ({ ...prev, socialLinks: prev.socialLinks.filter((_, i) => i !== index) }));
-  };
-
-  const toggleActive = async (section) => {
+  const saveAll = async () => {
+    setSaving(true)
     try {
-      const res = await fetch(`/api/content/footer/${section._id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...section, isActive: !section.isActive })
-      });
-      if (res.ok) fetchFooterSections();
+      const reqs = []
+      reqs.push(fetch('/api/content/pages/footer/sections/about', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+        content: { en: JSON.stringify({ logoUrl: aboutSection.logoUrl, aboutText: aboutSection.aboutText, socialLinks: aboutSection.socialLinks }) }
+      }) }))
+      reqs.push(fetch('/api/content/pages/footer/sections/navigation', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+        title: { en: navSection.title || '' },
+        content: { en: JSON.stringify({ showAbout: !!navSection.showAbout, showServices: !!navSection.showServices, showProjects: !!navSection.showProjects, showClients: !!navSection.showClients, showBlog: !!navSection.showBlog, showContact: !!navSection.showContact }) }
+      }) }))
+      reqs.push(fetch('/api/content/pages/footer/sections/quick-links', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+        title: { en: quickSection.title || '' },
+        content: { en: JSON.stringify({ showQuote: !!quickSection.showQuote, showVisit: !!quickSection.showVisit, showProfile: !!quickSection.showProfile, showHse: !!quickSection.showHse, showPrivacy: !!quickSection.showPrivacy, showTerms: !!quickSection.showTerms }) }
+      }) }))
+      reqs.push(fetch('/api/content/pages/footer/sections/newsletter', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+        title: { en: newsSection.title || '' },
+        description: { en: newsSection.description || '' },
+        content: { en: JSON.stringify({ placeholderEmail: newsSection.placeholderEmail || '' }) }
+      }) }))
+      reqs.push(fetch('/api/content/pages/footer/sections/bottom', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+        content: { en: JSON.stringify({ line1: bottomSection.line1 || '', line2: bottomSection.line2 || '' }) }
+      }) }))
+      const results = await Promise.all(reqs)
+      const ok = results.every(r => r.ok)
+      alert(ok ? 'Saved' : 'Failed to save some sections')
     } catch (e) {
-      console.error('Error toggling section:', e);
-    }
-  };
+      alert('Error saving')
+    } finally { setSaving(false) }
+  }
 
-  const swapOrder = async (a, b) => {
-    // swap order values between two sections
-    try {
-      const reqs = [
-        fetch(`/api/content/footer/${a._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...a, order: b.order }) }),
-        fetch(`/api/content/footer/${b._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...b, order: a.order }) })
-      ];
-      await Promise.all(reqs);
-      await fetchFooterSections();
-    } catch (e) {
-      console.error('Error reordering sections:', e);
-    }
-  };
-
-  const moveUp = (index) => {
-    if (index <= 0) return;
-    const current = footerSections[index];
-    const prev = footerSections[index - 1];
-    swapOrder(current, prev);
-  };
-  const moveDown = (index) => {
-    if (index >= footerSections.length - 1) return;
-    const current = footerSections[index];
-    const next = footerSections[index + 1];
-    swapOrder(current, next);
-  };
-
-  if (loading) return <AdminLayout title="Footer"><div>Loading...</div></AdminLayout>;
+  if (loading) return <AdminLayout><div style={{ padding: 24 }}>Loading...</div></AdminLayout>
 
   return (
-    <AdminLayout title="Manage Footer">
-      <style jsx>{`
-        .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; box-shadow:0 4px 6px -1px rgba(0,0,0,0.06); }
-        .card-header { padding:16px 20px; border-bottom:1px solid #e5e7eb; background:linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%); display:flex; justify-content:space-between; align-items:center; }
-        .card-body { padding:20px; }
-        .btn { border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:600; }
-        .btn-primary { background:#3b82f6; color:#fff; }
-        .btn-success { background:#10b981; color:#fff; }
-        .btn-danger { background:#ef4444; color:#fff; }
-        .btn-gray { background:#6b7280; color:#fff; }
-        table { width:100%; border-collapse:collapse; }
-        th, td { padding:12px 16px; border-bottom:1px solid #f3f4f6; text-align:left; }
-        th { background:#f9fafb; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:#374151; }
-        input, textarea, select { width:100%; padding:10px 12px; border:1px solid #e5e7eb; border-radius:8px; font-size:14px; }
-        .row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-        .row-1 { display:grid; grid-template-columns:1fr; gap:16px; }
-        .switch { display:inline-flex; align-items:center; gap:8px; }
-      `}</style>
+    <AdminLayout>
+      <div style={{ padding: 24 }}>
+        <style jsx>{`
+          .card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+          .row { display: grid; grid-template-columns: 1fr; gap: 12px; }
+          @media (min-width: 900px) { .row-2 { grid-template-columns: 1fr 1fr; } .row-3 { grid-template-columns: 1fr 1fr 1fr; } }
+          .inline { display: flex; gap: 8px; align-items: center; }
+          .switch { width: 16px; height: 16px; }
+          .logo-preview { width: 160px; height: auto; border: 1px dashed #d1d5db; border-radius: 6px; }
+        `}</style>
 
-      <div className="card" style={{ marginBottom: 20 }}>
-        <div className="card-header">
-          <div style={{ fontWeight: 600, color: '#1f2937' }}>Footer Sections</div>
-          <button className="btn btn-primary" onClick={() => { setEditingSection(null); setFormData({ section: 'company', title: '', content: '', links: [], contactInfo: { address: '', phone: '', email: '' }, socialLinks: [], order: footerSections.length, isActive: true }); setShowForm(true); }}>+ Add Section</button>
+        <h2 style={{ marginBottom: 16 }}>Footer CMS</h2>
+
+        {/* Section 1: About */}
+        <div className="card">
+          <h3 style={{ marginBottom: 12 }}>About Section</h3>
+          <div className="row row-2">
+            <div>
+              <Input label="Logo URL" value={aboutSection.logoUrl} onChange={e => setAboutSection(p => ({ ...p, logoUrl: e.target.value }))} placeholder="/uploads/logo.png" />
+              <input type="file" accept="image/*" onChange={async (e) => { if (!e.target.files?.[0]) return; const url = await uploadLogo(e.target.files[0]); setAboutSection(p => ({ ...p, logoUrl: url })) }} />
+              {aboutSection.logoUrl ? (<div style={{ marginTop: 8 }}><img className="logo-preview" src={aboutSection.logoUrl} alt="logo" /></div>) : null}
+            </div>
+            <div>
+              <Textarea label="About" rows={4} value={aboutSection.aboutText} onChange={e => setAboutSection(p => ({ ...p, aboutText: e.target.value }))} />
+            </div>
+          </div>
+          <div style={{ marginTop: 8 }}>
+            <h4>Social Links</h4>
+            {aboutSection.socialLinks.map((item, idx) => (
+              <div className="row row-2" key={idx}>
+                <Input label="Label" value={item.label} onChange={e => setAboutSection(p => ({ ...p, socialLinks: p.socialLinks.map((s, i) => i === idx ? { ...s, label: e.target.value } : s) }))} />
+                <Input label="URL" value={item.url} onChange={e => setAboutSection(p => ({ ...p, socialLinks: p.socialLinks.map((s, i) => i === idx ? { ...s, url: e.target.value } : s) }))} />
+              </div>
+            ))}
+            <button onClick={() => setAboutSection(p => ({ ...p, socialLinks: [...p.socialLinks, { label: '', url: '' }] }))} style={{ marginTop: 8 }}>Add Link</button>
+          </div>
         </div>
-        <div className="card-body" style={{ overflowX: 'auto' }}>
-          {footerSections.length === 0 ? (
-            <div style={{ color: '#6b7280' }}>No footer sections yet. Click "Add Section" to create one.</div>
-          ) : (
-            <table>
-              <thead>
-                <tr>
-                  <th>Section</th>
-                  <th>Title</th>
-                  <th>Order</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {footerSections.map((s, idx) => (
-                  <tr key={s._id}>
-                    <td style={{ textTransform: 'capitalize' }}>{s.section}</td>
-                    <td>{s.title}</td>
-                    <td>{s.order}</td>
-                    <td>{s.isActive ? 'Active' : 'Hidden'}</td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                        <button className="btn btn-gray" onClick={() => moveUp(idx)} title="Move up">↑</button>
-                        <button className="btn btn-gray" onClick={() => moveDown(idx)} title="Move down">↓</button>
-                        <button className="btn btn-success" onClick={() => toggleActive(s)}>{s.isActive ? 'Hide' : 'Show'}</button>
-                        <button className="btn btn-primary" onClick={() => handleEdit(s)}>Edit</button>
-                        <button className="btn btn-danger" onClick={() => handleDelete(s._id)}>Delete</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+
+        {/* Section 2: Navigation */}
+        <div className="card">
+          <h3 style={{ marginBottom: 12 }}>Navigation Section</h3>
+          <div className="row row-2">
+            <Input label="Title" value={navSection.title} onChange={e => setNavSection(p => ({ ...p, title: e.target.value }))} />
+          </div>
+          <div className="row row-3">
+            <label className="inline"><input className="switch" type="checkbox" checked={navSection.showAbout} onChange={e => setNavSection(p => ({ ...p, showAbout: e.target.checked }))} /> About Us</label>
+            <label className="inline"><input className="switch" type="checkbox" checked={navSection.showServices} onChange={e => setNavSection(p => ({ ...p, showServices: e.target.checked }))} /> Services</label>
+            <label className="inline"><input className="switch" type="checkbox" checked={navSection.showProjects} onChange={e => setNavSection(p => ({ ...p, showProjects: e.target.checked }))} /> Projects</label>
+            <label className="inline"><input className="switch" type="checkbox" checked={navSection.showClients} onChange={e => setNavSection(p => ({ ...p, showClients: e.target.checked }))} /> Clients</label>
+            <label className="inline"><input className="switch" type="checkbox" checked={navSection.showBlog} onChange={e => setNavSection(p => ({ ...p, showBlog: e.target.checked }))} /> Blog</label>
+            <label className="inline"><input className="switch" type="checkbox" checked={navSection.showContact} onChange={e => setNavSection(p => ({ ...p, showContact: e.target.checked }))} /> Contact Us</label>
+          </div>
+        </div>
+
+        {/* Section 3: Quick Links */}
+        <div className="card">
+          <h3 style={{ marginBottom: 12 }}>Quick Link Section</h3>
+          <div className="row row-2">
+            <Input label="Title" value={quickSection.title} onChange={e => setQuickSection(p => ({ ...p, title: e.target.value }))} />
+          </div>
+          <div className="row row-3">
+            <label className="inline"><input className="switch" type="checkbox" checked={quickSection.showQuote} onChange={e => setQuickSection(p => ({ ...p, showQuote: e.target.checked }))} /> Get a Quote</label>
+            <label className="inline"><input className="switch" type="checkbox" checked={quickSection.showVisit} onChange={e => setQuickSection(p => ({ ...p, showVisit: e.target.checked }))} /> Book a Site Visit</label>
+            <label className="inline"><input className="switch" type="checkbox" checked={quickSection.showProfile} onChange={e => setQuickSection(p => ({ ...p, showProfile: e.target.checked }))} /> Company Profile</label>
+            <label className="inline"><input className="switch" type="checkbox" checked={quickSection.showHse} onChange={e => setQuickSection(p => ({ ...p, showHse: e.target.checked }))} /> HSE Policy</label>
+            <label className="inline"><input className="switch" type="checkbox" checked={quickSection.showPrivacy} onChange={e => setQuickSection(p => ({ ...p, showPrivacy: e.target.checked }))} /> Privacy Policy</label>
+            <label className="inline"><input className="switch" type="checkbox" checked={quickSection.showTerms} onChange={e => setQuickSection(p => ({ ...p, showTerms: e.target.checked }))} /> Terms of Use</label>
+          </div>
+        </div>
+
+        {/* Section 4: Newsletter */}
+        <div className="card">
+          <h3 style={{ marginBottom: 12 }}>Newsletter Section</h3>
+          <div className="row row-2">
+            <Input label="Title" value={newsSection.title} onChange={e => setNewsSection(p => ({ ...p, title: e.target.value }))} />
+          </div>
+          <div>
+            <Textarea label="Description" rows={3} value={newsSection.description} onChange={e => setNewsSection(p => ({ ...p, description: e.target.value }))} />
+          </div>
+          <div className="row row-2">
+            <Input label="Email Placeholder" value={newsSection.placeholderEmail} onChange={e => setNewsSection(p => ({ ...p, placeholderEmail: e.target.value }))} />
+          </div>
+        </div>
+
+        {/* Section 5: Bottom */}
+        <div className="card">
+          <h3 style={{ marginBottom: 12 }}>Footer Bottom</h3>
+          <div>
+            <Textarea label="Line 1" rows={2} value={bottomSection.line1} onChange={e => setBottomSection(p => ({ ...p, line1: e.target.value }))} />
+          </div>
+          <div>
+            <Textarea label="Line 2" rows={2} value={bottomSection.line2} onChange={e => setBottomSection(p => ({ ...p, line2: e.target.value }))} />
+          </div>
+        </div>
+
+        <div>
+          <button disabled={saving} onClick={saveAll} style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '12px 20px', borderRadius: 8, cursor: 'pointer' }}>{saving ? 'Saving...' : 'Save All'}</button>
         </div>
       </div>
-
-      {showForm && (
-        <form onSubmit={handleSubmit} className="card">
-          <div className="card-header">
-            <div style={{ fontWeight: 600, color: '#1f2937' }}>{editingSection ? 'Edit Section' : 'Add Section'}</div>
-            <button type="button" className="btn btn-gray" onClick={() => { setShowForm(false); setEditingSection(null); }}>Close</button>
-          </div>
-          <div className="card-body">
-            <div className="row">
-              <div>
-                <label>Section Type</label>
-                <select value={formData.section} onChange={e => setFormData(prev => ({ ...prev, section: e.target.value }))}>
-                  <option value="company">Company</option>
-                  <option value="services">Services</option>
-                  <option value="contact">Contact</option>
-                  <option value="social">Social</option>
-                </select>
-              </div>
-              <div>
-                <label>Title</label>
-                <input value={formData.title} onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))} />
-              </div>
-              <div className="row-1">
-                <div>
-                  <label>Content</label>
-                  <textarea value={formData.content} onChange={e => setFormData(prev => ({ ...prev, content: e.target.value }))} />
-                </div>
-              </div>
-              <div>
-                <label>Order</label>
-                <input type="number" value={formData.order} onChange={e => setFormData(prev => ({ ...prev, order: Number(e.target.value) }))} />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input id="active" type="checkbox" checked={formData.isActive} onChange={e => setFormData(prev => ({ ...prev, isActive: e.target.checked }))} />
-                <label htmlFor="active">Active</label>
-              </div>
-            </div>
-
-            {(formData.section === 'company' || formData.section === 'services') && (
-              <div style={{ marginTop: 16 }}>
-                <div style={{ fontWeight: 600, marginBottom: 8 }}>Links</div>
-                {formData.links.map((link, i) => (
-                  <div key={i} className="row" style={{ marginBottom: 8 }}>
-                    <div>
-                      <label>Text</label>
-                      <input value={link.text} onChange={e => updateLink(i, 'text', e.target.value)} />
-                    </div>
-                    <div>
-                      <label>URL</label>
-                      <input value={link.url} onChange={e => updateLink(i, 'url', e.target.value)} />
-                    </div>
-                    <div style={{ display:'flex', alignItems:'flex-end' }}>
-                      <button type="button" className="btn btn-danger" onClick={() => removeLink(i)}>Remove</button>
-                    </div>
-                  </div>
-                ))}
-                <button type="button" className="btn btn-primary" onClick={addLink}>+ Add Link</button>
-              </div>
-            )}
-
-            {formData.section === 'contact' && (
-              <div style={{ marginTop: 16 }}>
-                <div style={{ fontWeight: 600, marginBottom: 8 }}>Contact Info</div>
-                <div className="row">
-                  <div>
-                    <label>Address</label>
-                    <input value={formData.contactInfo.address} onChange={e => setFormData(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, address: e.target.value } }))} />
-                  </div>
-                  <div>
-                    <label>Phone</label>
-                    <input value={formData.contactInfo.phone} onChange={e => setFormData(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, phone: e.target.value } }))} />
-                  </div>
-                  <div>
-                    <label>Email</label>
-                    <input value={formData.contactInfo.email} onChange={e => setFormData(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, email: e.target.value } }))} />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {formData.section === 'social' && (
-              <div style={{ marginTop: 16 }}>
-                <div style={{ fontWeight: 600, marginBottom: 8 }}>Social Links</div>
-                {formData.socialLinks.map((link, i) => (
-                  <div key={i} className="row" style={{ marginBottom: 8 }}>
-                    <div>
-                      <label>Platform</label>
-                      <input value={link.platform} onChange={e => updateSocialLink(i, 'platform', e.target.value)} />
-                    </div>
-                    <div>
-                      <label>URL</label>
-                      <input value={link.url} onChange={e => updateSocialLink(i, 'url', e.target.value)} />
-                    </div>
-                    <div>
-                      <label>Icon (optional)</label>
-                      <input value={link.icon} onChange={e => updateSocialLink(i, 'icon', e.target.value)} />
-                    </div>
-                    <div style={{ display:'flex', alignItems:'flex-end' }}>
-                      <button type="button" className="btn btn-danger" onClick={() => removeSocialLink(i)}>Remove</button>
-                    </div>
-                  </div>
-                ))}
-                <button type="button" className="btn btn-primary" onClick={addSocialLink}>+ Add Social Link</button>
-              </div>
-            )}
-
-            <div style={{ display:'flex', justifyContent:'flex-end', gap:12, marginTop:16 }}>
-              <button type="button" className="btn btn-gray" onClick={() => { setShowForm(false); setEditingSection(null); }}>Cancel</button>
-              <button type="submit" className="btn btn-success">{editingSection ? 'Update Section' : 'Create Section'}</button>
-            </div>
-          </div>
-        </form>
-      )}
     </AdminLayout>
-  );
-} 
+  )
+}
+

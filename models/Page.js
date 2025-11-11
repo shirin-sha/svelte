@@ -38,6 +38,42 @@ const pageSchema = new mongoose.Schema({
       en: { type: String, default: '' },
       ar: { type: String, default: '' }
     },
+    description: {
+      en: { type: String, default: '' },
+      ar: { type: String, default: '' }
+    },
+    mainImage: {
+      type: String,
+      default: ''
+    },
+    authorImage: {
+      type: String,
+      default: ''
+    },
+    signatureImage: {
+      type: String,
+      default: ''
+    },
+    experienceYears: {
+      type: Number,
+      default: 0
+    },
+    experienceText: {
+      type: String,
+      default: ''
+    },
+    progressBars: [{
+      title: { type: String, default: '' },
+      percentage: { type: Number, default: 0 }
+    }],
+    phoneNumber: {
+      type: String,
+      default: ''
+    },
+    phoneText: {
+      type: String,
+      default: ''
+    },
     image: {
       type: String,
       default: ''
@@ -81,7 +117,7 @@ const pageSchema = new mongoose.Schema({
     },
     type: {
       type: String,
-      enum: ['text', 'image', 'hero', 'about', 'services', 'counter', 'contact', 'action', 'why-choose-us', 'banner', 'features', 'projects', 'brand', 'blog'],
+      enum: ['text', 'image', 'hero', 'about', 'services', 'counter', 'contact', 'action', 'why-choose-us', 'banner', 'features', 'projects', 'brand', 'blog', 'testimonials'],
       default: 'text'
     }
   }],

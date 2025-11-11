@@ -5,7 +5,7 @@ export async function PUT(req, { params }) {
   try {
     await dbConnect();
     const { id } = params;
-    const { title, subtitle, imageUrl, topText } = await req.json();
+    const { title, subtitle, imageUrl, topText, primaryText, primaryUrl, secondaryText, secondaryVideoId } = await req.json();
     
     if (!imageUrl) {
       return Response.json({ error: 'Image is required' }, { status: 400 });
@@ -24,6 +24,10 @@ export async function PUT(req, { params }) {
         subtitle,
         imageUrl,
         topText,
+        primaryText,
+        primaryUrl,
+        secondaryText,
+        secondaryVideoId,
         updatedAt: new Date()
       },
       { new: true }

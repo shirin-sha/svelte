@@ -28,7 +28,8 @@ export default function AboutCMS() {
     { name: 'brand', title: 'Brand', description: 'Brand logos and partners' },
     { name: 'why-choose-us', title: 'Why Choose Us', description: 'Reasons to choose our company' },
     { name: 'action', title: 'Call to Action', description: 'Contact CTA block' },
-    { name: 'team', title: 'Team', description: 'Our team members' }
+    { name: 'our-promise', title: 'Our Promise', description: 'Promise cards content' },
+    { name: 'our-approach', title: 'Our Approach', description: 'Approach section content & image' }
   ];
 
   const fetchAboutPage = async () => {
@@ -103,12 +104,22 @@ export default function AboutCMS() {
   };
 
   const handleEdit = (sectionName) => {
-    router.push(`/admin/cms/about/${sectionName}`);
+    // Brand, why-choose-us, and action sections are managed from home CMS, not about CMS
+    if (sectionName === 'brand') {
+      router.push('/admin/cms/home/brand');
+    } else if (sectionName === 'why-choose-us') {
+      router.push('/admin/cms/home/why-choose-us');
+    } else if (sectionName === 'action') {
+      router.push('/admin/cms/home/action');
+    } else if (sectionName === 'our-promise') {
+      router.push('/admin/cms/about/our-promise');
+    } else if (sectionName === 'our-approach') {
+      router.push('/admin/cms/about/our-approach');
+    } else {
+      router.push(`/admin/cms/about/${sectionName}`);
+    }
   };
 
-  const handlePreview = (sectionName) => {
-    router.push(`/about#${sectionName}`);
-  };
 
   const toggleSection = async (sectionName) => {
     const currentSection = sections.find(s => s.name === sectionName);
@@ -197,9 +208,6 @@ export default function AboutCMS() {
         }
         .edit-btn:hover {
           background-color: #2563eb !important;
-        }
-        .preview-btn:hover {
-          background-color: #059669 !important;
         }
         .toggle-switch {
           position: relative;
@@ -312,18 +320,6 @@ export default function AboutCMS() {
                 </th>
                 <th style={{ 
                   padding: '16px 32px', 
-                  textAlign: 'left', 
-                  borderBottom: '1px solid #e5e7eb', 
-                  fontWeight: '600',
-                  color: '#374151',
-                  fontSize: '14px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em'
-                }}>
-                  Title
-                </th>
-                <th style={{ 
-                  padding: '16px 32px', 
                   textAlign: 'center', 
                   borderBottom: '1px solid #e5e7eb', 
                   fontWeight: '600',
@@ -359,36 +355,12 @@ export default function AboutCMS() {
                   }}
                 >
                   <td style={{ padding: '20px 32px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <div>
-                        <div style={{ 
-                          fontWeight: '600', 
-                          color: '#111827',
-                          fontSize: '16px',
-                          marginBottom: '4px'
-                        }}>
-                          {section.title}
-                        </div>
-                        <div style={{ 
-                          color: '#6b7280',
-                          fontSize: '14px'
-                        }}>
-                          {section.description}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '20px 32px' }}>
                     <div style={{ 
-                      background: '#f3f4f6',
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      display: 'inline-block',
-                      fontSize: '14px',
-                      color: '#374151',
-                      fontWeight: '500'
+                      fontWeight: '600', 
+                      color: '#111827',
+                      fontSize: '16px'
                     }}>
-                      {section.name.replace('-', ' ')}
+                      {section.title}
                     </div>
                   </td>
                   <td style={{ padding: '20px 32px', textAlign: 'center' }}>
@@ -447,30 +419,6 @@ export default function AboutCMS() {
                           <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                         </svg>
                         Edit
-                      </button>
-                      <button
-                        onClick={() => handlePreview(section.name)}
-                        className="action-btn preview-btn"
-                        style={{ 
-                          background: '#10b981', 
-                          color: '#fff', 
-                          border: 'none', 
-                          padding: '10px 16px', 
-                          borderRadius: '8px', 
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          fontWeight: '500',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}
-                        title={`Preview ${section.title}`}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                          <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
-                        Preview
                       </button>
                     </div>
                   </td>

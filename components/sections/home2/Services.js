@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 export default function Services() {
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [sectionData, setSectionData] = useState({ buttonText: 'EXPLORE SERVICE', cardImageUrl: 'assets/img/service/service-v2-single-bg.jpg' });
 
     useEffect(() => {
         const fetchServices = async () => {
@@ -21,7 +22,32 @@ export default function Services() {
             }
         };
 
+        const fetchSection = async () => {
+            try {
+                const res = await fetch('/api/content/pages/home/sections/services');
+                if (res.ok) {
+                    const section = await res.json();
+                    let parsed = null;
+                    try {
+                        parsed = section?.content?.en ? JSON.parse(section.content.en) : null;
+                    } catch (_) {
+                        parsed = null;
+                    }
+                    if (parsed) {
+                        setSectionData(prev => ({
+                            ...prev,
+                            buttonText: parsed.buttonText || prev.buttonText,
+                            cardImageUrl: parsed.cardImageUrl || prev.cardImageUrl
+                        }));
+                    }
+                }
+            } catch (e) {
+                // ignore and keep defaults
+            }
+        };
+
         fetchServices();
+        fetchSection();
     }, []);
 
     // Default services if no data is available
@@ -64,7 +90,7 @@ export default function Services() {
                             <div className="service-two__single">
                                 <div className="shape2"><img src="assets/img/shape/service-v2-shape2.png" alt=""/></div>
                                 <div className="service-two__single-bg"
-                                    style={{backgroundImage: 'url(assets/img/service/service-v2-single-bg.jpg)'}}></div>
+                                    style={{backgroundImage: `url(${sectionData.cardImageUrl})`}}></div>
                                 <div className="service-two__single-icon">
                                     <span className={service.icon}></span>
                                 </div>
@@ -74,7 +100,7 @@ export default function Services() {
                                 </div>
 
                                 <div className="btn-box">
-                                    <Link href="/architecture">EXPLORE SERVICE</Link>
+                                    <Link href="/architecture">{sectionData.buttonText || 'EXPLORE SERVICE'}</Link>
                                 </div>
                             </div>
                         </div>

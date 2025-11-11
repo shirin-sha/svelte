@@ -1,19 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
-
-const ICON_OPTIONS = [
-  'icon-solution',
-  'icon-blueprint',
-  'icon-office-building',
-  'icon-architecture',
-  'icon-idea',
-  'icon-team',
-  'icon-tools',
-  'icon-verified',
-  'icon-house',
-  'icon-plan'
-];
+import { Input, Textarea } from '@/components/forms';
 
 export default function FeaturesAdminPage() {
   const [items, setItems] = useState([]);
@@ -35,11 +23,16 @@ export default function FeaturesAdminPage() {
         } catch (_) {
           parsed = null;
         }
-        const dynamicItems = parsed?.items || [
-          { title: 'Creative Solution', iconClass: 'icon-solution' },
-          { title: 'Minimal Architect', iconClass: 'icon-blueprint' },
-          { title: 'Redesign Dream', iconClass: 'icon-office-building' }
-        ];
+        const dynamicItems = (parsed?.items || [
+          { title: 'Creative Design', subtitle: 'Tailored concepts that reflect your brand and lifestyle.', iconClass: 'fas fa-drafting-compass', link: '/about' },
+          { title: 'Expert Fit-Out', subtitle: 'Quality craftsmanship with rigorous QA/QC at every stage.', iconClass: 'fas fa-tools', link: '/service' },
+          { title: 'On-Time Delivery', subtitle: 'Clear schedules, proactive, zero surprises.', iconClass: 'fas fa-calendar-check', link: '/projects' }
+        ]).map(item => ({
+          title: item.title || '',
+          subtitle: item.subtitle || '',
+          iconClass: item.iconClass || 'fas fa-circle',
+          link: item.link || '#'
+        }));
         setItems(dynamicItems.slice(0, 12));
       }
     } catch (e) {
@@ -50,7 +43,7 @@ export default function FeaturesAdminPage() {
   };
 
   const addItem = () => {
-    setItems(prev => [...prev, { title: '', iconClass: ICON_OPTIONS[0] }]);
+    setItems(prev => [...prev, { title: '', subtitle: '', iconClass: '', link: '' }]);
   };
 
   const removeItem = (index) => {
@@ -107,32 +100,42 @@ export default function FeaturesAdminPage() {
               <div style={{ color: '#6b7280' }}>No items. Click "+ Add Item" to create one.</div>
             )}
             {items.map((item, index) => (
-              <div key={index} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr auto', gap: 12, alignItems: 'center', border: '1px solid #e5e7eb', borderRadius: 8, padding: 12 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Title</label>
-                  <input
-                    type="text"
-                    value={item.title}
-                    onChange={e => updateItem(index, 'title', e.target.value)}
-                    placeholder="Feature title"
-                    style={{ width: '100%', padding: 8, border: '1px solid #e5e7eb', borderRadius: 6 }}
-                  />
-                </div>
+              <div key={index} style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1.5fr 1fr auto', gap: 12, alignItems: 'center', border: '1px solid #e5e7eb', borderRadius: 8, padding: 12 }}>
+                <Input
+                  label="Title"
+                  value={item.title}
+                  onChange={e => updateItem(index, 'title', e.target.value)}
+                  placeholder="Feature title"
+                  style={{ marginBottom: 0, fontSize: '12px' }}
+                />
+                <Textarea
+                  label="Subtitle"
+                  value={item.subtitle || ''}
+                  onChange={e => updateItem(index, 'subtitle', e.target.value)}
+                  placeholder="Short supporting text"
+                  rows={3}
+                  style={{ marginBottom: 0, fontSize: '12px' }}
+                />
                 <div>
                   <label style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Icon</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span className={item.iconClass} style={{ fontSize: 24 }}></span>
-                    <select
-                      value={item.iconClass}
+                    <i className={item.iconClass} style={{ fontSize: 22, width: 28, textAlign: 'center' }}></i>
+                    <input
+                      type="text"
+                      value={item.iconClass || ''}
                       onChange={e => updateItem(index, 'iconClass', e.target.value)}
+                      placeholder="Enter icon"
                       style={{ flex: 1, padding: 8, border: '1px solid #e5e7eb', borderRadius: 6 }}
-                    >
-                      {ICON_OPTIONS.map(icon => (
-                        <option key={icon} value={icon}>{icon}</option>
-                      ))}
-                    </select>
+                    />
                   </div>
                 </div>
+                <Input
+                  label="Plus Link URL"
+                  value={item.link || ''}
+                  onChange={e => updateItem(index, 'link', e.target.value)}
+                  placeholder="e.g., /about"
+                  style={{ marginBottom: 0, fontSize: '12px' }}
+                />
                 <div>
                   <button onClick={() => removeItem(index)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: 6, cursor: 'pointer' }}>Remove</button>
                 </div>

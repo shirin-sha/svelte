@@ -1,19 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from "next/link";
-import CounterUp from "@/components/elements/CounterUp";
 
 export default function AboutSection() {
     const [aboutData, setAboutData] = useState({
-        subtitle: 'About Company',
-        title: 'Find Architect to Building Your Vision & Passion',
-        description: 'Arki features minimal and stylish design. The theme is well crafted for all the modern architect and interior design website. With Arki, it makes your website look even more attractive and impressive to',
-        mainImage: 'assets/img/about/about-v1-img1.jpg',
-        authorImage: 'assets/img/about/about-v1-img2.jpg',
-        signatureImage: 'assets/img/about/signature-1.png',
-        shapeImage: 'assets/img/shape/about-v1-shape1.png',
-        experienceYears: 24,
-        experienceText: 'YEARS WORKING EXPERIENCE',
+        subtitle: '',
+        title: '',
+        description: '',
+        mainImage: '',
         progressBars: [
             { title: 'Design', percentage: 80 },
             { title: 'Architect', percentage: 90 }
@@ -37,23 +31,20 @@ export default function AboutSection() {
                 if (data && data.length > 0) {
                     const section = data[0];
                     setAboutData({
-                        subtitle: section.subtitle?.en || 'About Company',
-                        title: section.title?.en || 'Find Architect to Building Your Vision & Passion',
-                        description: section.description?.en || 'Arki features minimal and stylish design. The theme is well crafted for all the modern architect and interior design website. With Arki, it makes your website look even more attractive and impressive to',
-                        mainImage: section.mainImage || 'assets/img/about/about-v1-img1.jpg',
-                        authorImage: section.authorImage || 'assets/img/about/about-v1-img2.jpg',
-                        signatureImage: section.signatureImage || 'assets/img/about/signature-1.png',
-                        shapeImage: section.shapeImage || 'assets/img/shape/about-v1-shape1.png',
-                        experienceYears: section.experienceYears || 24,
-                        experienceText: section.experienceText || 'YEARS WORKING EXPERIENCE',
-                        progressBars: section.progressBars || [
-                            { title: 'Design', percentage: 80 },
-                            { title: 'Architect', percentage: 90 }
-                        ],
-                        buttonText: section.buttonText || 'Discover More',
-                        buttonLink: section.buttonLink || 'about',
-                        phoneNumber: section.phoneNumber || '+123 456789',
-                        phoneText: section.phoneText || 'Do you have any project on your mind? Call Us:'
+                        subtitle: section.subtitle?.en || '',
+                        title: section.title?.en || '',
+                        description: section.description?.en || '',
+                        mainImage: section.mainImage || '',
+                        progressBars: section.progressBars && section.progressBars.length >= 2 
+                            ? section.progressBars.slice(0, 2)
+                            : [
+                                { title: 'Design', percentage: 80 },
+                                { title: 'Architect', percentage: 90 }
+                            ],
+                        buttonText: section.buttonText || '',
+                        buttonLink: section.buttonLink || '',
+                        phoneNumber: section.phoneNumber || '',
+                        phoneText: section.phoneText || ''
                     });
                 }
             }
@@ -83,9 +74,10 @@ export default function AboutSection() {
 
     return (
         <section className="about-one about-one--about">
-            <div className="shape1 float-bob-y">
+            {/* Shape image removed */}
+            {/* <div className="shape1 float-bob-y">
                 <img src={aboutData.shapeImage} alt=""/>
-            </div>
+            </div> */}
             <div className="container">
                 <div className="row">
                     {/*Start About One Img */}
@@ -94,21 +86,7 @@ export default function AboutSection() {
                             <div className="inner">
                                 <img src={aboutData.mainImage} alt=""/>
                             </div>
-                            <div className="experience-box">
-                                <div className="counter-box">
-                                    <h2 className="count">
-                                        <CounterUp end={aboutData.experienceYears} />
-                                    </h2>
-                                </div>
-                                <div className="text-box">
-                                    <p>{aboutData.experienceText.split(' ').map((word, index) => (
-                                        <span key={index}>
-                                            {word}
-                                            {index < aboutData.experienceText.split(' ').length - 1 && <br/>}
-                                        </span>
-                                    ))}</p>
-                                </div>
-                            </div>
+                       
                         </div>
                     </div>
                     {/*End About One Img */}
@@ -120,12 +98,7 @@ export default function AboutSection() {
                                 <div className="sub-title">
                                     <h5>{aboutData.subtitle}</h5>
                                 </div>
-                                <h2>{aboutData.title.split(' ').map((word, index) => (
-                                    <span key={index}>
-                                        {word}
-                                        {index < aboutData.title.split(' ').length - 1 && <br/>}
-                                    </span>
-                                ))}</h2>
+                                <h2>{aboutData.title}</h2>
                             </div>
 
                             <div className="text-box">
@@ -133,41 +106,47 @@ export default function AboutSection() {
                             </div>
 
                             <div className="about-one__content-progress">
-                                {aboutData.progressBars.map((bar, index) => (
-                                    <div key={index} className={`about-one__content-progress-single ${index === aboutData.progressBars.length - 1 ? 'mb0' : ''}`}>
-                                        <div className="title">
-                                            <h4>{bar.title}</h4>
+                                        <div className="about-one__content-progress-single">
+                                            <div className="title">
+                                                <h4>{aboutData.progressBars[0].title}</h4>
+                                            </div>
+                                            <div className="bar">
+                                                <div className="bar-inner1 count-bar" data-percent="90%">
+                                                    <div className="count-text">{aboutData.progressBars[0].percentage}%</div>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="bar">
-                                            <div className={`bar-inner${index + 1} count-bar`} data-percent={`${bar.percentage}%`}>
-                                                <div className="count-text">{bar.percentage}%</div>
+
+                                        <div className="about-one__content-progress-single mb0">
+                                            <div className="title">
+                                                <h4>{aboutData.progressBars[1].title}</h4>
+                                            </div>
+                                            <div className="bar">
+                                                <div className="bar-inner2 count-bar" data-percent="95%">
+                                                    <div className="count-text style2">{aboutData.progressBars[1].percentage}%</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
 
+                     
                             <div className="about-one__content-bottom">
-                                <div className="about-one__content-bottom-author-box">
-                                    <div className="btn-box">
-                                        <Link className="thm-btn" href={aboutData.buttonLink}>
-                                            <span className="txt">{aboutData.buttonText}</span>
-                                        </Link>
-                                    </div>
+                                        <div className="about-one__content-bottom-author-box">
+                                            <div className="btn-box">
+                                                <Link className="thm-btn" href={aboutData.buttonLink}>
+                                                    <span className="txt">{aboutData.buttonText}</span>
+                                                </Link>
+                                            </div>
 
-                                    <div className="author-info">
-                                        <div className="img-box">
-                                            <img src={aboutData.authorImage} alt=""/>
+                                            <div className="author-info">
+                                              
+                                                <div className="signature-box">
+                                                    <p style={{fontSize: '18px', lineHeight: '26px', fontWeight: '700',color:'#11161f'}}>  {aboutData.phoneText} <Link href={`tel:${aboutData.phoneNumber}`}>{aboutData.phoneNumber}</Link></p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="signature-box">
-                                            <img src={aboutData.signatureImage} alt=""/>
-                                        </div>
+                                     
                                     </div>
-                                </div>
-                                <div className="text">
-                                    <h4>{aboutData.phoneText} <Link href={`tel:${aboutData.phoneNumber}`}>{aboutData.phoneNumber}</Link></h4>
-                                </div>
-                            </div>
                         </div>
                     </div>
                     {/*End About One Content */}

@@ -9,11 +9,9 @@ export default function AboutSectionPage() {
     title: 'Find Architect to Building Your Vision & Passion',
     description: 'Arki features minimal and stylish design. The theme is well crafted for all the modern architect and interior design website. With Arki, it makes your website look even more attractive and impressive to',
     mainImage: 'assets/img/about/about-v1-img1.jpg',
-    authorImage: 'assets/img/about/about-v1-img2.jpg',
-    signatureImage: 'assets/img/about/signature-1.png',
-    shapeImage: 'assets/img/shape/about-v1-shape1.png',
-    experienceYears: 24,
-    experienceText: 'YEARS WORKING EXPERIENCE',
+    // authorImage: 'assets/img/about/about-v1-img2.jpg', // Removed
+    // signatureImage: 'assets/img/about/signature-1.png', // Removed
+    // shapeImage: 'assets/img/shape/about-v1-shape1.png', // Removed
     progressBars: [
       { title: 'Design', percentage: 80 },
       { title: 'Architect', percentage: 90 }
@@ -50,12 +48,10 @@ export default function AboutSectionPage() {
             title: section.title?.en || 'Find Architect to Building Your Vision & Passion',
             description: section.description?.en || 'Arki features minimal and stylish design. The theme is well crafted for all the modern architect and interior design website. With Arki, it makes your website look even more attractive and impressive to',
             mainImage: section.mainImage || 'assets/img/about/about-v1-img1.jpg',
-            authorImage: section.authorImage || 'assets/img/about/about-v1-img2.jpg',
-            signatureImage: section.signatureImage || 'assets/img/about/signature-1.png',
-            shapeImage: section.shapeImage || 'assets/img/shape/about-v1-shape1.png',
-            experienceYears: section.experienceYears || 24,
-            experienceText: section.experienceText || 'YEARS WORKING EXPERIENCE',
-            progressBars: section.progressBars || [
+            // authorImage: section.authorImage || 'assets/img/about/about-v1-img2.jpg', // Removed
+            // signatureImage: section.signatureImage || 'assets/img/about/signature-1.png', // Removed
+            // shapeImage: section.shapeImage || 'assets/img/shape/about-v1-shape1.png', // Removed
+            progressBars: section.progressBars && section.progressBars.length >= 2 ? section.progressBars.slice(0, 2) : [
               { title: 'Design', percentage: 80 },
               { title: 'Architect', percentage: 90 }
             ],
@@ -104,22 +100,17 @@ export default function AboutSectionPage() {
   };
 
   const handleProgressBarChange = (index, field, value) => {
-    const newProgressBars = [...aboutData.progressBars];
-    newProgressBars[index] = { ...newProgressBars[index], [field]: value };
-    setAboutData(prev => ({ ...prev, progressBars: newProgressBars }));
-  };
-
-  const addProgressBar = () => {
-    setAboutData(prev => ({
-      ...prev,
-      progressBars: [...prev.progressBars, { title: 'New Skill', percentage: 50 }]
-    }));
-  };
-
-  const removeProgressBar = (index) => {
-    if (aboutData.progressBars.length > 1) {
-      const newProgressBars = aboutData.progressBars.filter((_, i) => i !== index);
-      setAboutData(prev => ({ ...prev, progressBars: newProgressBars }));
+    // Ensure we only have 2 progress bars - static
+    const currentBars = aboutData.progressBars.length >= 2 
+      ? [...aboutData.progressBars.slice(0, 2)]
+      : [
+          { title: 'Design', percentage: 80 },
+          { title: 'Architect', percentage: 90 }
+        ];
+    
+    if (currentBars[index]) {
+      currentBars[index] = { ...currentBars[index], [field]: value };
+      setAboutData(prev => ({ ...prev, progressBars: currentBars }));
     }
   };
 
@@ -129,23 +120,16 @@ export default function AboutSectionPage() {
 
     try {
       let mainImage = aboutData.mainImage;
-      let authorImage = aboutData.authorImage;
-      let signatureImage = aboutData.signatureImage;
-      let shapeImage = aboutData.shapeImage;
+      // let authorImage = aboutData.authorImage; // Removed
+      // let signatureImage = aboutData.signatureImage; // Removed
+      // let shapeImage = aboutData.shapeImage; // Removed
 
       // Upload new images if selected
       if (selectedFiles.mainImage) {
         mainImage = await uploadImage(selectedFiles.mainImage);
       }
-      if (selectedFiles.authorImage) {
-        authorImage = await uploadImage(selectedFiles.authorImage);
-      }
-      if (selectedFiles.signatureImage) {
-        signatureImage = await uploadImage(selectedFiles.signatureImage);
-      }
-      if (selectedFiles.shapeImage) {
-        shapeImage = await uploadImage(selectedFiles.shapeImage);
-      }
+      // Author image upload removed
+      // Signature and Shape image uploads removed
 
       const sectionData = {
         name: 'about-section',
@@ -153,12 +137,10 @@ export default function AboutSectionPage() {
         subtitle: { en: aboutData.subtitle },
         description: { en: aboutData.description },
         mainImage,
-        authorImage,
-        signatureImage,
-        shapeImage,
-        experienceYears: aboutData.experienceYears,
-        experienceText: aboutData.experienceText,
-        progressBars: aboutData.progressBars,
+        // authorImage, // Removed
+        // signatureImage, // Removed
+        // shapeImage, // Removed
+        progressBars: aboutData.progressBars.slice(0, 2), // Only 2 static progress bars
         buttonText: aboutData.buttonText,
         buttonLink: aboutData.buttonLink,
         phoneNumber: aboutData.phoneNumber,
@@ -240,59 +222,11 @@ export default function AboutSectionPage() {
             </div>
           </div>
 
-          {/* Experience Section */}
+          {/* Progress Bars Section - Static (2 bars only) */}
           <div style={{ marginBottom: 32 }}>
-            <h3 style={{ marginBottom: 16 }}>Experience Counter</h3>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: 8, fontWeight: '500' }}>Years of Experience:</label>
-                <input 
-                  type="number" 
-                  value={aboutData.experienceYears} 
-                  onChange={e => setAboutData(prev => ({ ...prev, experienceYears: parseInt(e.target.value) }))}
-                  required
-                  min="1"
-                  max="100"
-                  style={{ width: '100%', padding: 12, border: '1px solid #ddd', borderRadius: 6 }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: 8, fontWeight: '500' }}>Experience Text:</label>
-                <input 
-                  type="text" 
-                  value={aboutData.experienceText} 
-                  onChange={e => setAboutData(prev => ({ ...prev, experienceText: e.target.value }))}
-                  required
-                  style={{ width: '100%', padding: 12, border: '1px solid #ddd', borderRadius: 6 }}
-                  placeholder="e.g., YEARS WORKING EXPERIENCE"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Progress Bars Section */}
-          <div style={{ marginBottom: 32 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ margin: 0 }}>Progress Bars</h3>
-              <button 
-                type="button"
-                onClick={addProgressBar}
-                style={{ 
-                  background: '#10b981', 
-                  color: 'white', 
-                  border: 'none', 
-                  padding: '8px 16px', 
-                  borderRadius: 6, 
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                + Add Progress Bar
-              </button>
-            </div>
-
-            {aboutData.progressBars.map((bar, index) => (
+            <h3 style={{ marginBottom: 16 }}>Progress Bars</h3>
+          
+            {aboutData.progressBars.slice(0, 2).map((bar, index) => (
               <div key={index} style={{ 
                 border: '1px solid #e5e7eb', 
                 borderRadius: 8, 
@@ -300,26 +234,7 @@ export default function AboutSectionPage() {
                 marginBottom: 16,
                 background: '#f9fafb'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <h4 style={{ margin: 0 }}>Progress Bar {index + 1}</h4>
-                  {aboutData.progressBars.length > 1 && (
-                    <button 
-                      type="button"
-                      onClick={() => removeProgressBar(index)}
-                      style={{ 
-                        background: '#ef4444', 
-                        color: 'white', 
-                        border: 'none', 
-                        padding: '6px 12px', 
-                        borderRadius: 4, 
-                        cursor: 'pointer',
-                        fontSize: '12px'
-                      }}
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
+                <h4 style={{ margin: '0 0 16px 0' }}>Progress Bar {index + 1}</h4>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
@@ -408,141 +323,40 @@ export default function AboutSectionPage() {
           <div style={{ marginBottom: 32 }}>
             <h3 style={{ marginBottom: 16 }}>Images</h3>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: 8, fontWeight: '500' }}>Main Image:</label>
-                <div style={{ 
-                  background: '#f8f9fa', 
-                  padding: 12, 
-                  borderRadius: 4, 
-                  marginBottom: 8,
-                  border: '1px solid #e9ecef',
-                  fontSize: '12px'
-                }}>
-                  📏 Recommended: 600×800 pixels
-                </div>
-                <input 
-                  type="file" 
-                  accept="image/*"
-                  onChange={e => handleFileSelect('mainImage', e)}
-                  style={{ width: '100%', padding: 12, border: '1px solid #ddd', borderRadius: 6 }}
-                />
-                {(imagePreviews.mainImage || aboutData.mainImage) && (
-                  <img 
-                    src={imagePreviews.mainImage || aboutData.mainImage} 
-                    alt="Main Image Preview" 
-                    style={{ 
-                      maxWidth: '100%', 
-                      height: 'auto', 
-                      borderRadius: 6,
-                      marginTop: 8,
-                      border: '1px solid #ddd'
-                    }} 
-                  />
-                )}
+            <div>
+              <label style={{ display: 'block', marginBottom: 8, fontWeight: '500' }}>Main Image:</label>
+              <div style={{ 
+                background: '#f8f9fa', 
+                padding: 12, 
+                borderRadius: 4, 
+                marginBottom: 8,
+                border: '1px solid #e9ecef',
+                fontSize: '12px'
+              }}>
+                📏 Recommended: 600×800 pixels
               </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: 8, fontWeight: '500' }}>Author Image:</label>
-                <div style={{ 
-                  background: '#f8f9fa', 
-                  padding: 12, 
-                  borderRadius: 4, 
-                  marginBottom: 8,
-                  border: '1px solid #e9ecef',
-                  fontSize: '12px'
-                }}>
-                  📏 Recommended: 200×200 pixels
-                </div>
-                <input 
-                  type="file" 
-                  accept="image/*"
-                  onChange={e => handleFileSelect('authorImage', e)}
-                  style={{ width: '100%', padding: 12, border: '1px solid #ddd', borderRadius: 6 }}
+              <input 
+                type="file" 
+                accept="image/*"
+                onChange={e => handleFileSelect('mainImage', e)}
+                style={{ width: '100%', padding: 12, border: '1px solid #ddd', borderRadius: 6 }}
+              />
+              {(imagePreviews.mainImage || aboutData.mainImage) && (
+                <img 
+                  src={imagePreviews.mainImage || aboutData.mainImage} 
+                  alt="Main Image Preview" 
+                  style={{ 
+                    maxWidth: '100%', 
+                    height: 'auto', 
+                    borderRadius: 6,
+                    marginTop: 8,
+                    border: '1px solid #ddd'
+                  }} 
                 />
-                {(imagePreviews.authorImage || aboutData.authorImage) && (
-                  <img 
-                    src={imagePreviews.authorImage || aboutData.authorImage} 
-                    alt="Author Image Preview" 
-                    style={{ 
-                      maxWidth: '100%', 
-                      height: 'auto', 
-                      borderRadius: 6,
-                      marginTop: 8,
-                      border: '1px solid #ddd'
-                    }} 
-                  />
-                )}
-              </div>
+              )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginTop: 20 }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: 8, fontWeight: '500' }}>Signature Image:</label>
-                <div style={{ 
-                  background: '#f8f9fa', 
-                  padding: 12, 
-                  borderRadius: 4, 
-                  marginBottom: 8,
-                  border: '1px solid #e9ecef',
-                  fontSize: '12px'
-                }}>
-                  📏 Recommended: 200×100 pixels (PNG with transparency)
-                </div>
-                <input 
-                  type="file" 
-                  accept="image/*"
-                  onChange={e => handleFileSelect('signatureImage', e)}
-                  style={{ width: '100%', padding: 12, border: '1px solid #ddd', borderRadius: 6 }}
-                />
-                {(imagePreviews.signatureImage || aboutData.signatureImage) && (
-                  <img 
-                    src={imagePreviews.signatureImage || aboutData.signatureImage} 
-                    alt="Signature Image Preview" 
-                    style={{ 
-                      maxWidth: '100%', 
-                      height: 'auto', 
-                      borderRadius: 6,
-                      marginTop: 8,
-                      border: '1px solid #ddd'
-                    }} 
-                  />
-                )}
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: 8, fontWeight: '500' }}>Shape Image:</label>
-                <div style={{ 
-                  background: '#f8f9fa', 
-                  padding: 12, 
-                  borderRadius: 4, 
-                  marginBottom: 8,
-                  border: '1px solid #e9ecef',
-                  fontSize: '12px'
-                }}>
-                  📏 Recommended: 200×200 pixels (PNG with transparency)
-                </div>
-                <input 
-                  type="file" 
-                  accept="image/*"
-                  onChange={e => handleFileSelect('shapeImage', e)}
-                  style={{ width: '100%', padding: 12, border: '1px solid #ddd', borderRadius: 6 }}
-                />
-                {(imagePreviews.shapeImage || aboutData.shapeImage) && (
-                  <img 
-                    src={imagePreviews.shapeImage || aboutData.shapeImage} 
-                    alt="Shape Image Preview" 
-                    style={{ 
-                      maxWidth: '100%', 
-                      height: 'auto', 
-                      borderRadius: 6,
-                      marginTop: 8,
-                      border: '1px solid #ddd'
-                    }} 
-                  />
-                )}
-              </div>
-            </div>
+            {/* Author Image, Signature Image and Shape Image fields removed */}
           </div>
 
           <button 

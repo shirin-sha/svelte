@@ -1,39 +1,6 @@
-'use client';
-import Link from "next/link";
-import { useState, useEffect } from 'react';
+import Link from "next/link"
 
 export default function Footer1() {
-    const [footerSections, setFooterSections] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        fetchFooterSections();
-    }, []);
-
-    const fetchFooterSections = async () => {
-        try {
-            const response = await fetch('/api/content/footer');
-            if (response.ok) {
-                const data = await response.json();
-                setFooterSections(data);
-            }
-        } catch (error) {
-            console.error('Error fetching footer sections:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const getSectionByType = (type) => {
-        return footerSections.find(section => section.section === type);
-    };
-
-    const companySection = getSectionByType('company');
-    const servicesSection = getSectionByType('services');
-    const contactSection = getSectionByType('contact');
-    const socialSection = getSectionByType('social');
-
-
     return (
         <>
             {/*Start Footer One */}
@@ -51,27 +18,13 @@ export default function Footer1() {
                                     </div>
 
                                     <div className="footer-widget__about-inner">
-                                        <div className="text-box">
-                                            <p>{companySection?.content || 'Address 301 Princes Street, Ei class Mahall Damietta Egypt-104'}</p>
-                                        </div>
-                                        <div className="number-box">
-                                            <Link href={`tel:${contactSection?.contactInfo?.phone || '123456789'}`}>
-                                                {contactSection?.contactInfo?.phone || '+1 343 5335 3545'}
-                                            </Link>
+                                        <div className="text-box">Svelte Contracting L.L.C specializes in interior design and fit-out solutions across Abu Dhabi, delivering elegant, functional, and sustainable spaces with precision craftsmanship and innovative design excellence.
                                         </div>
                                         <div className="footer-social-link">
-                                            {socialSection?.socialLinks?.map((link, index) => (
-                                                <Link key={index} href={link.url} target="_blank" rel="noopener noreferrer">
-                                                    {link.icon || link.platform}
-                                                </Link>
-                                            )) || (
-                                                <>
-                                                    <Link href="#">tw</Link>
-                                                    <Link href="#">in</Link>
-                                                    <Link href="#">db</Link>
-                                                    <Link href="#">ig</Link>
-                                                </>
-                                            )}
+                                            <Link href="#">Ln</Link>
+                                            <Link href="#">In</Link>
+                                            <Link href="#">Fb</Link>
+                                            <Link href="#">Bh</Link>
                                         </div>
                                     </div>
                                 </div>
@@ -82,24 +35,20 @@ export default function Footer1() {
                             <div className="col-xl-2 col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".2s">
                                 <div className="single-footer-widget footer-widget__links">
                                     <div className="title">
-                                        <h2>{companySection?.title || 'Navigation'}</h2>
+                                        <h2>Navigation</h2>
                                     </div>
 
                                     <div className="footer-widget__links-box">
                                         <ul>
-                                            {companySection?.links?.map((link, index) => (
-                                                <li key={index}><Link href={link.url}>{link.text}</Link></li>
-                                            )) || (
-                                                <>
-                                                    <li><Link href="/">Home</Link></li>
-                                                    <li><Link href="/about">About Us</Link></li>
-                                                    <li><Link href="/service">Services</Link></li>
-                                                    <li><Link href="/contact">Contact Us</Link></li>
-                                                    <li><Link href="/blog">Our Blog</Link></li>
-                                                </>
-                                            )}
+                                            <li><Link href="/about">About Us</Link></li>
+                                            <li><Link href="/services">Services</Link></li>
+                                            <li><Link href="/projects">Projects</Link></li>
+                                            <li><Link href="/clients">Clients</Link></li>
+                                            <li><Link href="/blog">Blog</Link></li>
+                                            <li><Link href="/contact">Contact Us</Link></li>
                                         </ul>
                                     </div>
+
                                 </div>
                             </div>
                             {/*End Single Footer Widget */}
@@ -108,23 +57,20 @@ export default function Footer1() {
                             <div className="col-xl-3 col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".3s">
                                 <div className="single-footer-widget footer-widget__links quick-link">
                                     <div className="title">
-                                        <h2>{servicesSection?.title || 'Quick Link'}</h2>
+                                        <h2>Quick Link</h2>
                                     </div>
 
                                     <div className="footer-widget__links-box">
                                         <ul>
-                                            {servicesSection?.links?.map((link, index) => (
-                                                <li key={index}><Link href={link.url}>{link.text}</Link></li>
-                                            )) || (
-                                                <>
-                                                    <li><Link href="/contact">Help</Link></li>
-                                                    <li><Link href="/contact">Support</Link></li>
-                                                    <li><Link href="/contact">Clients</Link></li>
-                                                    <li><Link href="/projects">Portfolio</Link></li>
-                                                </>
-                                            )}
+                                            <li><Link href="/get-quote">Get a Quote</Link></li>
+                                            <li><Link href="/book-site-visit">Book a Site Visit</Link></li>
+                                            <li><Link href="/download-profile">Company Profile</Link></li>
+                                            <li><Link href="/hse-policy">HSE Policy</Link></li>
+                                            <li><Link href="/privacy-policy">Privacy Policy</Link></li>
+                                            <li><Link href="/terms-of-use">Terms of Use</Link></li>
                                         </ul>
                                     </div>
+
                                 </div>
                             </div>
                             {/*End Single Footer Widget */}
@@ -138,8 +84,7 @@ export default function Footer1() {
 
                                     <div className="footer-widget__newsletter-box">
                                         <div className="footer-widget__newsletter-text">
-                                            <p>Subscribe our newsletter to get the <br/>
-                                                latest news & updates</p>
+                                            <p>Subscribe for design tips, project updates and news from Svelte.</p>
                                         </div>
 
                                         <form className="footer-widget__newsletter-form">
@@ -164,7 +109,8 @@ export default function Footer1() {
                     <div className="container">
                         <div className="footer-bottom__inner">
                             <div className="footer-bottom__text text-center">
-                                <p>Copyright © 2025 Xafran by <Link href="https://themeforest.net/user/starplate">Starplate.</Link> All Rights Reserved</p>
+                                <p>© 2025 Svelte Contracting LLC. All rights reserved.<br/>
+                                Registered in Abu Dhabi, UAE. Trade license available on request.</p>
                             </div>
                         </div>
                     </div>
@@ -172,6 +118,7 @@ export default function Footer1() {
                 {/*End Footer Bottom */}
             </footer>
             {/*End Footer One */}
+
         </>
     )
 }

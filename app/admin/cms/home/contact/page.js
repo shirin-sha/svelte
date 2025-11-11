@@ -4,10 +4,22 @@ import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function ContactPage() {
-  const [contactData, setContactData] = useState(null);
+  const [contactData, setContactData] = useState({
+    formTitle: 'WE READY TO HELP',
+    formSubtitle: 'Have Any Question?',
+    submitButtonText: 'SEND YOUR MESSAGE',
+    backgroundImage: 'assets/img/background/contact-v1-bg.jpg',
+    counter1: {
+      number: 48,
+      text: 'Designers and developers'
+    },
+    counter2: {
+      number: 256,
+      text: 'Awards for digital art work'
+    }
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState('settings');
   const router = useRouter();
 
   useEffect(() => {
@@ -21,10 +33,26 @@ export default function ContactPage() {
 
   const fetchContactData = async () => {
     try {
-      const response = await fetch('/api/content/contact');
+      const response = await fetch('/api/content/pages/home/sections/contact');
       if (response.ok) {
-        const data = await response.json();
-        setContactData(data);
+        const section = await response.json();
+        let parsed = null;
+        try {
+          parsed = section?.content?.en ? JSON.parse(section.content.en) : null;
+        } catch (_) {
+          parsed = null;
+        }
+        if (parsed) {
+          setContactData(prev => ({
+            ...prev,
+            formTitle: parsed.formTitle || prev.formTitle,
+            formSubtitle: parsed.formSubtitle || prev.formSubtitle,
+            submitButtonText: parsed.submitButtonText || prev.submitButtonText,
+            backgroundImage: parsed.backgroundImage || prev.backgroundImage,
+            counter1: parsed.counter1 || prev.counter1,
+            counter2: parsed.counter2 || prev.counter2
+          }));
+        }
       }
     } catch (error) {
       console.error('Error fetching contact data:', error);
@@ -38,15 +66,23 @@ export default function ContactPage() {
     setSaving(true);
     
     try {
-      const response = await fetch('/api/content/contact', {
-        method: 'POST',
+      const payload = {
+        content: {
+          en: JSON.stringify(contactData)
+        }
+      };
+      
+      const response = await fetch('/api/content/pages/home/sections/contact', {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(contactData)
+        body: JSON.stringify(payload)
       });
       
       if (response.ok) {
-        alert('Contact settings saved successfully!');
+        alert('Contact section updated successfully!');
         await fetchContactData();
+      } else {
+        alert('Failed to save contact changes');
       }
     } catch (error) {
       console.error('Error saving contact settings:', error);
@@ -56,388 +92,332 @@ export default function ContactPage() {
     }
   };
 
-  const updateSubmissionStatus = async (submissionId, status) => {
+  const handleInputChange = (field, value) => {
+    setContactData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageUpload = async (e, imageField) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file size (2MB limit)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('File size must be less than 2MB');
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
     try {
-      const response = await fetch(`/api/content/contact/submissions/${submissionId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch('/api/upload', { 
+        method: 'POST', 
+        body: formData 
       });
       
       if (response.ok) {
-        await fetchContactData();
+        const data = await response.json();
+        handleInputChange(imageField, data.url);
+      } else {
+        alert('Failed to upload image. Please try again.');
       }
     } catch (error) {
-      console.error('Error updating submission status:', error);
+      console.error('Error uploading image:', error);
+      alert('Error uploading image. Please try again.');
     }
-  };
-
-  const handleInputChange = (field, value) => {
-    setContactData(prev => ({ ...prev, [field]: value }));
   };
 
   if (loading) return <AdminLayout title="Contact Settings"><div>Loading...</div></AdminLayout>;
 
   return (
-    <AdminLayout title="Contact Settings">
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
+    <AdminLayout title="Contact Section Management">
+      <div style={{ 
+        background: '#fff', 
+        borderRadius: '16px', 
+        padding: '32px', 
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        width: '100%'
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: '32px',
+          paddingBottom: '16px',
+          borderBottom: '1px solid #e5e7eb'
+        }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: '#111827' }}>
+              Contact Section Content
+            </h2>
+            <p style={{ margin: '4px 0 0 0', color: '#6b7280' }}>
+              Manage the content displayed in the Contact section of your home page
+            </p>
+          </div>
           <button 
-            onClick={() => setActiveTab('settings')}
+            onClick={handleSubmit} 
+            disabled={saving}
             style={{ 
-              background: activeTab === 'settings' ? '#2563eb' : '#f3f4f6', 
-              color: activeTab === 'settings' ? 'white' : '#374151',
+              background: saving ? '#9ca3af' : 'linear-gradient(135deg, #3b82f6, #1d4ed8)', 
+              color: '#fff', 
               border: 'none', 
-              padding: '10px 20px', 
-              borderRadius: 6, 
-              cursor: 'pointer' 
+              padding: '12px 24px', 
+              borderRadius: '8px', 
+              cursor: saving ? 'not-allowed' : 'pointer',
+              fontSize: '14px',
+              fontWeight: '600',
+              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
             }}
           >
-            Settings
-          </button>
-          <button 
-            onClick={() => setActiveTab('submissions')}
-            style={{ 
-              background: activeTab === 'submissions' ? '#2563eb' : '#f3f4f6', 
-              color: activeTab === 'submissions' ? 'white' : '#374151',
-              border: 'none', 
-              padding: '10px 20px', 
-              borderRadius: 6, 
-              cursor: 'pointer' 
-            }}
-          >
-            Form Submissions ({contactData?.submissions?.length || 0})
+            {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
 
-        {activeTab === 'settings' && (
-          <div style={{ background: '#fff', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-            <h3>Contact Form Settings</h3>
-            <form onSubmit={handleSubmit}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-                <div>
-                  <h4 style={{ marginBottom: 16 }}>Contact Information</h4>
-                  
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: 'block', marginBottom: 4 }}>Address:</label>
-                    <input 
-                      type="text" 
-                      value={contactData?.address || ''} 
-                      onChange={e => handleInputChange('address', e.target.value)}
-                      required
-                      style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                    />
-                  </div>
-                  
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: 'block', marginBottom: 4 }}>Primary Phone:</label>
-                    <input 
-                      type="text" 
-                      value={contactData?.phone || ''} 
-                      onChange={e => handleInputChange('phone', e.target.value)}
-                      required
-                      style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                    />
-                  </div>
-                  
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: 'block', marginBottom: 4 }}>Secondary Phone:</label>
-                    <input 
-                      type="text" 
-                      value={contactData?.secondaryPhone || ''} 
-                      onChange={e => handleInputChange('secondaryPhone', e.target.value)}
-                      style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                    />
-                  </div>
-                  
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: 'block', marginBottom: 4 }}>Primary Email:</label>
-                    <input 
-                      type="email" 
-                      value={contactData?.email || ''} 
-                      onChange={e => handleInputChange('email', e.target.value)}
-                      required
-                      style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                    />
-                  </div>
-                  
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: 'block', marginBottom: 4 }}>Secondary Email:</label>
-                    <input 
-                      type="email" 
-                      value={contactData?.secondaryEmail || ''} 
-                      onChange={e => handleInputChange('secondaryEmail', e.target.value)}
-                      style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                    />
-                  </div>
-                  
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: 'block', marginBottom: 4 }}>Google Maps URL:</label>
-                    <input 
-                      type="url" 
-                      value={contactData?.mapUrl || ''} 
-                      onChange={e => handleInputChange('mapUrl', e.target.value)}
-                      required
-                      style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                    />
-                    <small style={{ color: '#6c757d' }}>
-                      Paste the embed URL from Google Maps
-                    </small>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 style={{ marginBottom: 16 }}>Page Content</h4>
-                  
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: 'block', marginBottom: 4 }}>Page Title:</label>
-                    <input 
-                      type="text" 
-                      value={contactData?.pageTitle || ''} 
-                      onChange={e => handleInputChange('pageTitle', e.target.value)}
-                      style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                    />
-                  </div>
-                  
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: 'block', marginBottom: 4 }}>Page Description:</label>
-                    <textarea 
-                      value={contactData?.pageDescription || ''} 
-                      onChange={e => handleInputChange('pageDescription', e.target.value)}
-                      rows={3}
-                      style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                    />
-                  </div>
-                  
-                  <h4 style={{ marginBottom: 16, marginTop: 24 }}>Form Settings</h4>
-                  
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: 'block', marginBottom: 4 }}>Form Title:</label>
-                    <input 
-                      type="text" 
-                      value={contactData?.formTitle || ''} 
-                      onChange={e => handleInputChange('formTitle', e.target.value)}
-                      style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                    />
-                  </div>
-                  
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: 'block', marginBottom: 4 }}>Form Subtitle:</label>
-                    <textarea 
-                      value={contactData?.formSubtitle || ''} 
-                      onChange={e => handleInputChange('formSubtitle', e.target.value)}
-                      rows={2}
-                      style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                    />
-                  </div>
-                  
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: 'block', marginBottom: 4 }}>Submit Button Text:</label>
-                    <input 
-                      type="text" 
-                      value={contactData?.submitButtonText || ''} 
-                      onChange={e => handleInputChange('submitButtonText', e.target.value)}
-                      style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ marginTop: 24 }}>
-                <h4 style={{ marginBottom: 16 }}>Form Fields Configuration</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  <div>
-                    <label style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
-                      <input 
-                        type="checkbox" 
-                        checked={contactData?.showNameField || false}
-                        onChange={e => handleInputChange('showNameField', e.target.checked)}
-                        style={{ marginRight: 8 }}
-                      />
-                      Show Name Field
-                    </label>
-                    <input 
-                      type="text" 
-                      value={contactData?.nameLabel || ''} 
-                      onChange={e => handleInputChange('nameLabel', e.target.value)}
-                      placeholder="Field Label"
-                      style={{ width: '100%', padding: 6, border: '1px solid #ddd', borderRadius: 4, fontSize: '12px' }}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
-                      <input 
-                        type="checkbox" 
-                        checked={contactData?.showEmailField || false}
-                        onChange={e => handleInputChange('showEmailField', e.target.checked)}
-                        style={{ marginRight: 8 }}
-                      />
-                      Show Email Field
-                    </label>
-                    <input 
-                      type="text" 
-                      value={contactData?.emailLabel || ''} 
-                      onChange={e => handleInputChange('emailLabel', e.target.value)}
-                      placeholder="Field Label"
-                      style={{ width: '100%', padding: 6, border: '1px solid #ddd', borderRadius: 4, fontSize: '12px' }}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
-                      <input 
-                        type="checkbox" 
-                        checked={contactData?.showPhoneField || false}
-                        onChange={e => handleInputChange('showPhoneField', e.target.checked)}
-                        style={{ marginRight: 8 }}
-                      />
-                      Show Phone Field
-                    </label>
-                    <input 
-                      type="text" 
-                      value={contactData?.phoneLabel || ''} 
-                      onChange={e => handleInputChange('phoneLabel', e.target.value)}
-                      placeholder="Field Label"
-                      style={{ width: '100%', padding: 6, border: '1px solid #ddd', borderRadius: 4, fontSize: '12px' }}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
-                      <input 
-                        type="checkbox" 
-                        checked={contactData?.showSubjectField || false}
-                        onChange={e => handleInputChange('showSubjectField', e.target.checked)}
-                        style={{ marginRight: 8 }}
-                      />
-                      Show Subject Field
-                    </label>
-                    <input 
-                      type="text" 
-                      value={contactData?.subjectLabel || ''} 
-                      onChange={e => handleInputChange('subjectLabel', e.target.value)}
-                      placeholder="Field Label"
-                      style={{ width: '100%', padding: 6, border: '1px solid #ddd', borderRadius: 4, fontSize: '12px' }}
-                    />
-                  </div>
-                  
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
-                      <input 
-                        type="checkbox" 
-                        checked={contactData?.showMessageField || false}
-                        onChange={e => handleInputChange('showMessageField', e.target.checked)}
-                        style={{ marginRight: 8 }}
-                      />
-                      Show Message Field
-                    </label>
-                    <input 
-                      type="text" 
-                      value={contactData?.messageLabel || ''} 
-                      onChange={e => handleInputChange('messageLabel', e.target.value)}
-                      placeholder="Field Label"
-                      style={{ width: '100%', padding: 6, border: '1px solid #ddd', borderRadius: 4, fontSize: '12px' }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <button 
-                type="submit" 
-                disabled={saving}
-                style={{ 
-                  background: '#10b981', 
-                  color: 'white', 
-                  border: 'none', 
-                  padding: '12px 24px', 
-                  borderRadius: 6, 
-                  cursor: saving ? 'not-allowed' : 'pointer',
-                  marginTop: 24,
-                  opacity: saving ? 0.6 : 1
-                }}
-              >
-                {saving ? 'Saving...' : 'Save Settings'}
-              </button>
-            </form>
+        <div style={{ display: 'grid', gap: '24px' }}>
+          {/* Form Title */}
+          <div>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '8px', 
+              fontWeight: '600', 
+              color: '#374151' 
+            }}>
+              Form Title (Small Text)
+            </label>
+            <input
+              type="text"
+              value={contactData.formTitle}
+              onChange={(e) => handleInputChange('formTitle', e.target.value)}
+              placeholder="e.g., WE READY TO HELP"
+              style={{ 
+                width: '100%', 
+                padding: '12px', 
+                border: '1px solid #d1d5db', 
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+            />
+            <p style={{ 
+              margin: '4px 0 0 0', 
+              fontSize: '12px', 
+              color: '#6b7280' 
+            }}>
+              This appears as the small text above the main form heading
+            </p>
           </div>
-        )}
 
-        {activeTab === 'submissions' && (
-          <div style={{ background: '#fff', borderRadius: 8, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-            <div style={{ padding: 24, borderBottom: '1px solid #e5e7eb' }}>
-              <h3>Form Submissions</h3>
-              <p style={{ color: '#6b7280', margin: 0 }}>
-                Manage contact form submissions from your website visitors.
-              </p>
+          {/* Form Subtitle */}
+          <div>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '8px', 
+              fontWeight: '600', 
+              color: '#374151' 
+            }}>
+              Form Subtitle (Main Heading)
+            </label>
+            <input
+              type="text"
+              value={contactData.formSubtitle}
+              onChange={(e) => handleInputChange('formSubtitle', e.target.value)}
+              placeholder="e.g., Have Any Question?"
+              style={{ 
+                width: '100%', 
+                padding: '12px', 
+                border: '1px solid #d1d5db', 
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+            />
+            <p style={{ 
+              margin: '4px 0 0 0', 
+              fontSize: '12px', 
+              color: '#6b7280' 
+            }}>
+              This appears as the main heading for the contact form
+            </p>
+          </div>
+
+          {/* Submit Button Text */}
+          <div>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '8px', 
+              fontWeight: '600', 
+              color: '#374151' 
+            }}>
+              Submit Button Text
+            </label>
+            <input
+              type="text"
+              value={contactData.submitButtonText}
+              onChange={(e) => handleInputChange('submitButtonText', e.target.value)}
+              placeholder="e.g., SEND YOUR MESSAGE"
+              style={{ 
+                width: '100%', 
+                padding: '12px', 
+                border: '1px solid #d1d5db', 
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+            />
+            <p style={{ 
+              margin: '4px 0 0 0', 
+              fontSize: '12px', 
+              color: '#6b7280' 
+            }}>
+              Text displayed on the form submit button
+            </p>
+          </div>
+
+          {/* Background Image */}
+          <div>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '8px', 
+              fontWeight: '600', 
+              color: '#374151' 
+            }}>
+              Background Image
+            </label>
+            <div style={{ 
+              background: '#f8f9fa', 
+              padding: '12px', 
+              borderRadius: '8px', 
+              marginBottom: '8px',
+              border: '1px solid #e9ecef'
+            }}>
+              <strong>📏 Recommended Size:</strong> 1920×1080 pixels (Full background)
+              <br />
+              <small style={{ color: '#6c757d' }}>
+                • Format: JPG, PNG, WebP
+                • Max file size: 2MB
+                • High quality for background display
+              </small>
             </div>
-            
-            {contactData?.submissions?.length === 0 ? (
-              <div style={{ padding: 48, textAlign: 'center', color: '#6b7280' }}>
-                No submissions yet. Form submissions will appear here.
-              </div>
-            ) : (
-              <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
-                {contactData?.submissions?.map((submission, index) => (
-                  <div key={index} style={{ 
-                    padding: 16, 
-                    borderBottom: '1px solid #e5e7eb',
-                    background: submission.status === 'new' ? '#fef3c7' : 'white'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                      <div>
-                        <h4 style={{ margin: '0 0 8px 0' }}>{submission.name}</h4>
-                        <p style={{ margin: '0 0 4px 0', color: '#6b7280' }}>
-                          <strong>Email:</strong> {submission.email}
-                        </p>
-                        {submission.phone && (
-                          <p style={{ margin: '0 0 4px 0', color: '#6b7280' }}>
-                            <strong>Phone:</strong> {submission.phone}
-                          </p>
-                        )}
-                        {submission.subject && (
-                          <p style={{ margin: '0 0 4px 0', color: '#6b7280' }}>
-                            <strong>Subject:</strong> {submission.subject}
-                          </p>
-                        )}
-                        <p style={{ margin: '8px 0 0 0' }}>
-                          <strong>Message:</strong> {submission.message}
-                        </p>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ 
-                          padding: '4px 8px', 
-                          borderRadius: 4, 
-                          fontSize: '12px',
-                          background: submission.status === 'new' ? '#fef3c7' : 
-                                   submission.status === 'read' ? '#dbeafe' : '#dcfce7',
-                          color: submission.status === 'new' ? '#92400e' : 
-                                submission.status === 'read' ? '#1e40af' : '#166534'
-                        }}>
-                          {submission.status.toUpperCase()}
-                        </div>
-                        <div style={{ marginTop: 8 }}>
-                          <select 
-                            value={submission.status}
-                            onChange={(e) => updateSubmissionStatus(index, e.target.value)}
-                            style={{ padding: '4px 8px', borderRadius: 4, border: '1px solid #ddd', fontSize: '12px' }}
-                          >
-                            <option value="new">New</option>
-                            <option value="read">Read</option>
-                            <option value="replied">Replied</option>
-                          </select>
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#6b7280', marginTop: 4 }}>
-                          {new Date(submission.submittedAt).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleImageUpload(e, 'backgroundImage')}
+              style={{ 
+                width: '100%', 
+                padding: '12px', 
+                border: '1px solid #d1d5db', 
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+            />
+            {contactData.backgroundImage && (
+              <div style={{ marginTop: '8px' }}>
+                <img 
+                  src={contactData.backgroundImage} 
+                  alt="Background preview" 
+                  style={{ 
+                    maxWidth: '200px', 
+                    height: 'auto', 
+                    borderRadius: '4px',
+                    border: '1px solid #e5e7eb'
+                  }} 
+                />
               </div>
             )}
           </div>
-        )}
+
+          
+
+          {/* Counter 1 */}
+          <div>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '8px', 
+              fontWeight: '600', 
+              color: '#374151' 
+            }}>
+              Counter 1 - Number
+            </label>
+            <Input
+              label="Counter 1 - Number"
+              type="number"
+              value={contactData.counter1.number}
+              onChange={(e) => setContactData(prev => ({
+                ...prev,
+                counter1: { ...prev.counter1, number: parseInt(e.target.value) || 0 }
+              }))}
+              placeholder="e.g., 48"
+            />
+            <p style={{ 
+              margin: '4px 0 0 0', 
+              fontSize: '12px', 
+              color: '#6b7280' 
+            }}>
+              The number that will be displayed with the "+" symbol
+            </p>
+          </div>
+
+          <Textarea
+            label="Counter 1 - Description Text"
+            value={contactData.counter1.text}
+            onChange={(e) => setContactData(prev => ({
+              ...prev,
+              counter1: { ...prev.counter1, text: e.target.value }
+            }))}
+            placeholder="e.g., Designers and developers"
+            rows={2}
+          />
+          <p style={{ 
+            margin: '4px 0 0 0', 
+            fontSize: '12px', 
+            color: '#6b7280' 
+          }}>
+              Description text that appears below the counter number
+            </p>
+          </div>
+
+          {/* Counter 2 */}
+          <div>
+            <Input
+              label="Counter 2 - Number"
+              type="number"
+              value={contactData.counter2.number}
+              onChange={(e) => setContactData(prev => ({
+                ...prev,
+                counter2: { ...prev.counter2, number: parseInt(e.target.value) || 0 }
+              }))}
+              placeholder="e.g., 256"
+            />
+            <p style={{ 
+              margin: '4px 0 0 0', 
+              fontSize: '12px', 
+              color: '#6b7280' 
+            }}>
+              The number that will be displayed with the "+" symbol
+            </p>
+          </div>
+
+          <Textarea
+            label="Counter 2 - Description Text"
+            value={contactData.counter2.text}
+            onChange={(e) => setContactData(prev => ({
+              ...prev,
+              counter2: { ...prev.counter2, text: e.target.value }
+            }))}
+            placeholder="e.g., Awards for digital art work"
+            rows={2}
+          />
+          <p style={{ 
+            margin: '4px 0 0 0', 
+            fontSize: '12px', 
+            color: '#6b7280' 
+          }}>
+            Description text that appears below the counter number
+          </p>
+        </div>
       </div>
     </AdminLayout>
   );

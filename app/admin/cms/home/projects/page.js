@@ -2,26 +2,21 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
+import { Input } from '@/components/forms';
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
+  const [sectionData, setSectionData] = useState({
+    title: 'Our Projects',
+    subtitle: 'OUR WORK'
+  });
   const [formData, setFormData] = useState({
     title: '',
-    shortDescription: '',
-    longDescription: '',
-    category: '',
-    mainImage: '',
-    images: [],
-    client: '',
     location: '',
-    completionDate: '',
-    technologies: [],
-    status: 'completed',
-    order: 0,
-    isActive: true
+    mainImage: ''
   });
   const router = useRouter();
 
@@ -32,6 +27,7 @@ export default function ProjectsPage() {
       return;
     }
     fetchProjects();
+    fetchSectionData();
   }, [router]);
 
   const fetchProjects = async () => {
@@ -48,6 +44,56 @@ export default function ProjectsPage() {
     }
   };
 
+  const fetchSectionData = async () => {
+    try {
+      const response = await fetch('/api/content/pages/home/sections/projects');
+      if (response.ok) {
+        const section = await response.json();
+        let parsed = null;
+        try {
+          parsed = section?.content?.en ? JSON.parse(section.content.en) : null;
+        } catch (_) {
+          parsed = null;
+        }
+        if (parsed) {
+          setSectionData(prev => ({
+            ...prev,
+            title: parsed.title || prev.title,
+            subtitle: parsed.subtitle || prev.subtitle
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching section data:', error);
+    }
+  };
+
+  const handleSectionSave = async () => {
+    try {
+      const payload = {
+        content: {
+          en: JSON.stringify(sectionData)
+        }
+      };
+      
+      const res = await fetch('/api/content/pages/home/sections/projects', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      if (res.ok) {
+        alert('Projects section updated successfully!');
+        await fetchSectionData();
+      } else {
+        alert('Failed to save section changes');
+      }
+    } catch (error) {
+      console.error('Error saving section data:', error);
+      alert('Error saving section changes');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -57,11 +103,12 @@ export default function ProjectsPage() {
       
       const method = editingProject ? 'PUT' : 'POST';
       
-      const projectData = {
-        ...formData,
-        completionDate: formData.completionDate ? new Date(formData.completionDate) : null,
-        technologies: formData.technologies.filter(tech => tech.trim())
+      const baseData = {
+        title: formData.title,
+        location: formData.location,
+        mainImage: formData.mainImage
       };
+      const projectData = editingProject ? { ...editingProject, ...baseData } : baseData;
       
       const response = await fetch(url, {
         method,
@@ -72,18 +119,8 @@ export default function ProjectsPage() {
       if (response.ok) {
         setFormData({
           title: '',
-          shortDescription: '',
-          longDescription: '',
-          category: '',
-          mainImage: '',
-          images: [],
-          client: '',
           location: '',
-          completionDate: '',
-          technologies: [],
-          status: 'completed',
-          order: 0,
-          isActive: true
+          mainImage: ''
         });
         setShowForm(false);
         setEditingProject(null);
@@ -97,19 +134,9 @@ export default function ProjectsPage() {
   const handleEdit = (project) => {
     setEditingProject(project);
     setFormData({
-      title: project.title,
-      shortDescription: project.shortDescription,
-      longDescription: project.longDescription,
-      category: project.category,
-      mainImage: project.mainImage,
-      images: project.images || [],
-      client: project.client || '',
+      title: project.title || '',
       location: project.location || '',
-      completionDate: project.completionDate ? new Date(project.completionDate).toISOString().split('T')[0] : '',
-      technologies: project.technologies || [],
-      status: project.status,
-      order: project.order || 0,
-      isActive: project.isActive
+      mainImage: project.mainImage || ''
     });
     setShowForm(true);
   };
@@ -142,14 +169,7 @@ export default function ProjectsPage() {
       const response = await fetch('/api/upload', { method: 'POST', body: formData });
       if (response.ok) {
         const data = await response.json();
-        if (type === 'main') {
           setFormData(prev => ({ ...prev, mainImage: data.url }));
-        } else {
-          setFormData(prev => ({ 
-            ...prev, 
-            images: [...prev.images, { url: data.url, alt: '', size: { width: 0, height: 0 } }]
-          }));
-        }
       }
     } catch (error) {
       console.error('Error uploading image:', error);
@@ -188,8 +208,48 @@ export default function ProjectsPage() {
 
   return (
     <AdminLayout title="Manage Projects">
+      {/* Section Title Form */}
+      <div style={{ background: '#fff', padding: 24, borderRadius: 8, marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+        <h2 style={{ marginBottom: 24 }}>Projects Section Settings</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <Input
+            label="Small Title (Subtitle)"
+            value={sectionData.subtitle}
+            onChange={(e) => setSectionData(prev => ({ ...prev, subtitle: e.target.value }))}
+            placeholder="e.g., OUR WORK"
+            style={{ marginBottom: 0 }}
+          />
+          <Input
+            label="Main Title"
+            value={sectionData.title}
+            onChange={(e) => setSectionData(prev => ({ ...prev, title: e.target.value }))}
+            placeholder="e.g., Our Projects"
+            style={{ marginBottom: 0 }}
+          />
+        </div>
+        <div style={{ marginTop: 16 }}>
+          <button 
+            onClick={handleSectionSave}
+            style={{ 
+              background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', 
+              color: '#fff', 
+              border: 'none', 
+              padding: '12px 24px', 
+              borderRadius: '8px', 
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '600',
+              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+            }}
+          >
+            Save Section Settings
+          </button>
+        </div>
+      </div>
+
+      {/* Projects Management */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h2>Projects</h2>
+        <h2>Projects List</h2>
         <button 
           onClick={() => setShowForm(!showForm)}
           style={{ background: '#2563eb', color: 'white', border: 'none', padding: '10px 20px', borderRadius: 6, cursor: 'pointer' }}
@@ -202,89 +262,17 @@ export default function ProjectsPage() {
         <div style={{ background: '#fff', padding: 24, borderRadius: 8, marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
           <h3>{editingProject ? 'Edit Project' : 'Add New Project'}</h3>
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Title:</label>
-              <input 
-                type="text" 
-                value={formData.title} 
-                onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                required
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Category:</label>
-              <input 
-                type="text" 
-                value={formData.category} 
-                onChange={e => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                required
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Short Description:</label>
-              <textarea 
-                value={formData.shortDescription} 
-                onChange={e => setFormData(prev => ({ ...prev, shortDescription: e.target.value }))}
-                required
-                rows={3}
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Long Description:</label>
-              <textarea 
-                value={formData.longDescription} 
-                onChange={e => setFormData(prev => ({ ...prev, longDescription: e.target.value }))}
-                required
-                rows={6}
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
-            <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', marginBottom: 4 }}>Client:</label>
-                <input 
-                  type="text" 
-                  value={formData.client} 
-                  onChange={e => setFormData(prev => ({ ...prev, client: e.target.value }))}
-                  style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', marginBottom: 4 }}>Location:</label>
-                <input 
-                  type="text" 
-                  value={formData.location} 
-                  onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                  style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                />
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', marginBottom: 4 }}>Completion Date:</label>
-                <input 
-                  type="date" 
-                  value={formData.completionDate} 
-                  onChange={e => setFormData(prev => ({ ...prev, completionDate: e.target.value }))}
-                  style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', marginBottom: 4 }}>Status:</label>
-                <select 
-                  value={formData.status} 
-                  onChange={e => setFormData(prev => ({ ...prev, status: e.target.value }))}
-                  style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                >
-                  <option value="completed">Completed</option>
-                  <option value="ongoing">Ongoing</option>
-                  <option value="planned">Planned</option>
-                </select>
-              </div>
-            </div>
+            <Input
+              label="Title"
+              value={formData.title}
+              onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              required
+            />
+            <Input
+              label="Location"
+              value={formData.location}
+              onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
+            />
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', marginBottom: 4 }}>Main Image:</label>
               <div style={{ 
@@ -315,99 +303,6 @@ export default function ProjectsPage() {
                 <img src={formData.mainImage} alt="Main Preview" style={{ maxWidth: 200, height: 'auto' }} />
               </div>
             )}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Additional Images:</label>
-              <div style={{ 
-                background: '#f8f9fa', 
-                padding: 12, 
-                borderRadius: 4, 
-                marginBottom: 8,
-                border: '1px solid #e9ecef'
-              }}>
-                <strong>📏 Recommended Size:</strong> 1200×800 pixels (Project gallery images)
-                <br />
-                <small style={{ color: '#6c757d' }}>
-                  • Format: JPG, PNG, WebP
-                  • Max file size: 1.5MB per image
-                  • Aspect ratio: 3:2 (landscape gallery)
-                  • Multiple images for project showcase
-                </small>
-              </div>
-              <input 
-                type="file" 
-                accept="image/*"
-                onChange={e => handleImageUpload(e, 'additional')}
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
-            {formData.images.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', marginBottom: 4 }}>Project Images:</label>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {formData.images.map((image, index) => (
-                    <div key={index} style={{ position: 'relative' }}>
-                      <img src={image.url} alt="Preview" style={{ width: 100, height: 60, objectFit: 'cover', borderRadius: 4 }} />
-                      <button 
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        style={{ 
-                          position: 'absolute', 
-                          top: -5, 
-                          right: -5, 
-                          background: '#ef4444', 
-                          color: 'white', 
-                          border: 'none', 
-                          borderRadius: '50%', 
-                          width: 20, 
-                          height: 20, 
-                          cursor: 'pointer',
-                          fontSize: 12
-                        }}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Technologies:</label>
-              {formData.technologies.map((tech, index) => (
-                <div key={index} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                  <input 
-                    type="text" 
-                    value={tech} 
-                    onChange={e => updateTechnology(index, e.target.value)}
-                    placeholder="Technology name"
-                    style={{ flex: 1, padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => removeTechnology(index)}
-                    style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 12px', borderRadius: 4, cursor: 'pointer' }}
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-              <button 
-                type="button"
-                onClick={addTechnology}
-                style={{ background: '#10b981', color: 'white', border: 'none', padding: '8px 12px', borderRadius: 4, cursor: 'pointer' }}
-              >
-                Add Technology
-              </button>
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Order:</label>
-              <input 
-                type="number" 
-                value={formData.order} 
-                onChange={e => setFormData(prev => ({ ...prev, order: parseInt(e.target.value) }))}
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
             <button type="submit" style={{ background: '#10b981', color: 'white', border: 'none', padding: '10px 20px', borderRadius: 6, cursor: 'pointer' }}>
               {editingProject ? 'Update Project' : 'Create Project'}
             </button>
@@ -421,9 +316,7 @@ export default function ProjectsPage() {
             <tr style={{ background: '#f9fafb' }}>
               <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Image</th>
               <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Title</th>
-              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Category</th>
-              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Status</th>
-              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Client</th>
+              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Location</th>
               <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Actions</th>
             </tr>
           </thead>
@@ -445,20 +338,7 @@ export default function ProjectsPage() {
                     />
                   </td>
                   <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>{project.title}</td>
-                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>{project.category}</td>
-                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
-                    <span style={{ 
-                      padding: '4px 8px', 
-                      borderRadius: 4, 
-                      fontSize: 12,
-                      background: project.status === 'completed' ? '#10b981' : 
-                                 project.status === 'ongoing' ? '#f59e0b' : '#6b7280',
-                      color: 'white'
-                    }}>
-                      {project.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>{project.client || '-'}</td>
+                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>{project.location || '-'}</td>
                   <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
                     <button 
                       onClick={() => handleEdit(project)}

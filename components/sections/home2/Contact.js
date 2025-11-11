@@ -1,31 +1,81 @@
+'use client'
+import { useState, useEffect } from 'react'
 import Link from "next/link"
 import CounterUp from "@/components/elements/CounterUp"
 
 export default function Contact() {
+    const [contactData, setContactData] = useState({
+        formTitle: 'WE READY TO HELP',
+        formSubtitle: 'Have Any Question?',
+        submitButtonText: 'SEND YOUR MESSAGE',
+        backgroundImage: 'assets/img/background/contact-v1-bg.jpg',
+        counter1: {
+            number: 48,
+            text: 'Designers and developers'
+        },
+        counter2: {
+            number: 256,
+            text: 'Awards for digital art work'
+        }
+    })
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        fetchContactData()
+    }, [])
+
+    const fetchContactData = async () => {
+        try {
+            const res = await fetch('/api/content/pages/home/sections/contact')
+            if (res.ok) {
+                const section = await res.json()
+                let parsed = null
+                try {
+                    parsed = section?.content?.en ? JSON.parse(section.content.en) : null
+                } catch (_) {
+                    parsed = null
+                }
+                if (parsed) {
+                    setContactData(prev => ({
+                        ...prev,
+                        formTitle: parsed.formTitle || prev.formTitle,
+                        formSubtitle: parsed.formSubtitle || prev.formSubtitle,
+                        submitButtonText: parsed.submitButtonText || prev.submitButtonText,
+                        backgroundImage: parsed.backgroundImage || prev.backgroundImage,
+                        counter1: parsed.counter1 || prev.counter1,
+                        counter2: parsed.counter2 || prev.counter2
+                    }))
+                }
+            }
+        } catch (e) {
+            console.error('Error fetching contact section data:', e)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+ 
     return (
         <>
-     
         {/*Start Contact One */}
         <section className="contact-one">
-            <div className="contact-one__bg" style={{backgroundImage: 'url(assets/img/background/contact-v1-bg.jpg)'}}>
+            <div className="contact-one__bg" style={{backgroundImage: `url(${contactData.backgroundImage})`}}>
                 <div className="contact-one__counter">
                     <ul>
                         <li>
                             <div className="content-box">
-                                <h2 className="count"><CounterUp end={48} /> <span
+                                <h2 className="count"><CounterUp end={contactData.counter1.number} /> <span
                                         className="plus">+</span>
                                 </h2>
-                                <p>Designers and <br/>
-                                    developers</p>
+                                <p dangerouslySetInnerHTML={{ __html: contactData.counter1.text.replace(/\n/g, '<br/>') }} />
                             </div>
                         </li>
                         <li>
                             <div className="content-box">
-                                <h2 className="count"><CounterUp end={256} /> <span
-                                        className="plus">+</span>
+                                <h2 className="count"><CounterUp end={contactData.counter2.number} /> <span
+                                        className="plus">%</span>
                                 </h2>
-                                <p>Awards for digital <br/>
-                                    art work</p>
+                                <p dangerouslySetInnerHTML={{ __html: contactData.counter2.text.replace(/\n/g, '<br/>') }} />
                             </div>
                         </li>
                     </ul>
@@ -33,13 +83,13 @@ export default function Contact() {
             </div>
             <div className="contact-one__pattern" style={{backgroundImage: 'url(assets/img/pattern/contact-v1-pattern.jpg)'}}>
             </div>
-            <div className="contact-one__img"><img src="assets/img/resource/contact-v1-img1.png" alt=""/></div>
+            
             <div className="container clearfix">
                 <div className="contact-one__inner">
                     <div className="contact-one__form wow animated fadeInRight" data-wow-delay="0.1s">
                         <div className="title-box">
-                            <p>WE READY TO HELP</p>
-                            <h2>Have Any Question?</h2>
+                            <p>{contactData.formTitle}</p>
+                            <h2>{contactData.formSubtitle}</h2>
                         </div>
 
                         <form method="post" action="/">
@@ -60,7 +110,7 @@ export default function Contact() {
                                     <div className="button-box">
                                         <button className="thm-btn" type="submit" data-loading-text="Please wait...">
                                             <span className="txt">
-                                                SEND YOUR MEASSAGE
+                                                {contactData.submitButtonText}
                                             </span>
                                         </button>
                                     </div>
@@ -73,7 +123,6 @@ export default function Contact() {
             </div>
         </section>
         {/*End Contact One */}
-
         </>
     )
 }

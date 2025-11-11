@@ -1,8 +1,8 @@
 'use client'
 import Link from "next/link"
-import { useState, useEffect } from "react"
 import { Autoplay, Navigation, Pagination } from "swiper/modules"
 import { Swiper, SwiperSlide } from "swiper/react"
+import { useEffect, useState } from 'react'
 
 const swiperOptions = {
     modules: [Autoplay, Pagination, Navigation],
@@ -53,59 +53,38 @@ const swiperOptions = {
         },
     }
 }
-
 export default function ProjectSlider0() {
-    const [projects, setProjects] = useState([]);
-    const [loading, setLoading] = useState(true);
-
+    const [projects, setProjects] = useState([])
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const response = await fetch('/api/content/project/latest');
-                const data = await response.json();
-                if (data.projects) {
-                    setProjects(data.projects);
+                const res = await fetch('/api/content/project')
+                if (res.ok) {
+                    const data = await res.json()
+                    setProjects(Array.isArray(data) ? data : [])
                 }
-            } catch (error) {
-                console.error('Error fetching projects:', error);
-            } finally {
-                setLoading(false);
+            } catch (_) {
+                setProjects([])
             }
-        };
-
-        fetchProjects();
-    }, []);
-
-    // Default projects if no data is available
-    const defaultProjects = [
-        {
-            title: "Hotel Joshna Villa",
-            location: "San Fransisco",
-            mainImage: "assets/img/project/project-v2-img1.jpg"
-        },
-        {
-            title: "Hotel Joshna Villa", 
-            location: "San Fransisco",
-            mainImage: "assets/img/project/project-v2-img2.jpg"
-        },
-        {
-            title: "Hotel Joshna Villa",
-            location: "San Fransisco", 
-            mainImage: "assets/img/project/project-v2-img3.jpg"
         }
-    ];
-
-    const displayProjects = projects.length > 0 ? projects : defaultProjects;
-
+        fetchProjects()
+    }, [])
+    const hasProjects = projects.length > 0
+    if (!hasProjects) return null
+    // Ensure enough slides for seamless looping
+    const minSlides = 3
+    const items = projects.length >= minSlides
+        ? projects
+        : Array.from({ length: minSlides }, (_, i) => projects[i % projects.length])
     return (
         <>
             <Swiper {...swiperOptions} className="theme_carousel owl-theme">
-                {displayProjects.map((project, index) => (
-                    <SwiperSlide key={project._id || index} className="swiper-slide">
-                        <img src={project.mainImage} alt={project.title} />
+                {items.map((p, idx) => (
+                    <SwiperSlide className="swiper-slide" key={p._id || idx}>
+                        <img src={p.mainImage} alt={p.title} />
                         <div className="overlay-content">
-                            <p>{project.location}</p>
-                            <h2><a href="#">{project.title}</a></h2>
+                            <p>{p.category || ''}</p>
+                            <h2><a href="#">{p.title}</a></h2>
                         </div>
                     </SwiperSlide>
                 ))}

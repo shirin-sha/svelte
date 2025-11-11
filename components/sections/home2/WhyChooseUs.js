@@ -22,8 +22,7 @@ export default function WhyChooseUs() {
             }
         ],
         leftImage1: 'assets/img/resource/why-choose-us-v1-img1.jpg',
-        leftImage2: 'assets/img/resource/why-choose-us-v1-img2.jpg',
-        shapeImage: 'assets/img/shape/why-choose-us-v1-shape1.png'
+        leftImage2: 'assets/img/resource/why-choose-us-v1-img2.jpg'
     });
     const [loading, setLoading] = useState(true);
 
@@ -57,8 +56,7 @@ export default function WhyChooseUs() {
                             }
                         ],
                         leftImage1: section.leftImage1 || 'assets/img/resource/why-choose-us-v1-img1.jpg',
-                        leftImage2: section.leftImage2 || 'assets/img/resource/why-choose-us-v1-img2.jpg',
-                        shapeImage: section.shapeImage || 'assets/img/shape/why-choose-us-v1-shape1.png'
+                        leftImage2: section.leftImage2 || 'assets/img/resource/why-choose-us-v1-img2.jpg'
                     });
                 }
             }
@@ -97,7 +95,7 @@ export default function WhyChooseUs() {
                     <div className="col-xl-6 wow animated fadeInRight" data-wow-delay="0.1s">
                         <div className="why-choose-us-one__img">
                             <div className="shape1">
-                                <img src={whyChooseUsData.shapeImage} alt=""/>
+                                <img src="assets/img/shape/why-choose-us-v1-shape1.png" alt=""/>
                             </div>
                             <ul>
                                 <li>

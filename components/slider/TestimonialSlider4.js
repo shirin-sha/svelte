@@ -1,4 +1,5 @@
 'use client'
+import { useState, useEffect } from 'react'
 import { Autoplay, Navigation, Pagination } from "swiper/modules"
 import { Swiper, SwiperSlide } from "swiper/react"
 
@@ -52,182 +53,64 @@ const swiperOptions = {
     }
 }
 export default function TestimonialSlider4() {
+    const [features, setFeatures] = useState([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        fetchWhyChooseData()
+    }, [])
+
+    const fetchWhyChooseData = async () => {
+        try {
+            const response = await fetch('/api/content/pages/about/sections/why-choose-us')
+            if (response.ok) {
+                const data = await response.json()
+                if (data && data.features && Array.isArray(data.features)) {
+                    setFeatures(data.features)
+                } else {
+                    setFeatures([])
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching why choose data:', error)
+            setFeatures([])
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    if (loading) {
+        return null
+    }
+
+    if (!features || features.length === 0) {
+        return null
+    }
+
     return (
         <>
             <Swiper {...swiperOptions} className="thm-swiper__slider swiper-container">
-                        
-
-                        <div className="swiper-wrapper">
-
-                            <SwiperSlide className="swiper-slide">
-                                {/*Start Testimonials Two Single */}
-                                <div className="testimonials-two__single">
-                                    <div className="testimonials-two__single-top">
-                                        <div className="img-box">
-                                            <img src="assets/img/testimonial/testimonials-v2-img1.jpg" alt=""/>
-                                        </div>
-
-                                        <div className="icon-box">
-                                            <span className="icon-quote"></span>
-                                        </div>
-                                    </div>
-
-                                    <div className="testimonials-two__single-text">
-                                        <p>Bring to the table win-win strategies to ensure proactive domination. At the end
-                                            of
-                                            the day going forward normal that has evolved from
-                                            operational X is on the </p>
-                                    </div>
-
-                                    <div className="testimonials-two__single-bottom">
-                                        <h3>Janes Cooper</h3>
-                                        <p>Designer</p>
+                <div className="swiper-wrapper">
+                    {features.map((item, index) => (
+                        <SwiperSlide key={index} className="swiper-slide">
+                            {/*Start Why Choose Svelte Card */}
+                            <div className="testimonials-two__single">
+                                <div className="testimonials-two__single-top">
+                                    <div className="icon-box">
+                                        <span className={item.icon || ''}></span>
                                     </div>
                                 </div>
-                                {/*End Testimonials Two Single */}
-                            </SwiperSlide>
 
-                            <SwiperSlide className="swiper-slide">
-                                {/*Start Testimonials Two Single */}
-                                <div className="testimonials-two__single">
-                                    <div className="testimonials-two__single-top">
-                                        <div className="img-box">
-                                            <img src="assets/img/testimonial/testimonials-v2-img1.jpg" alt=""/>
-                                        </div>
-
-                                        <div className="icon-box">
-                                            <span className="icon-quote"></span>
-                                        </div>
-                                    </div>
-
-                                    <div className="testimonials-two__single-text">
-                                        <p>Bring to the table win-win strategies to ensure proactive domination. At the end
-                                            of
-                                            the day going forward normal that has evolved from
-                                            operational X is on the </p>
-                                    </div>
-
-                                    <div className="testimonials-two__single-bottom">
-                                        <h3>Anonna Aivi</h3>
-                                        <p>Designer</p>
-                                    </div>
+                                <div className="testimonials-two__single-text">
+                                    <h3>{item.title || ''}</h3>
+                                    <p>{item.description || ''}</p>
                                 </div>
-                                {/*End Testimonials Two Single */}
-                            </SwiperSlide>
-
-                            <SwiperSlide className="swiper-slide">
-                                {/*Start Testimonials Two Single */}
-                                <div className="testimonials-two__single">
-                                    <div className="testimonials-two__single-top">
-                                        <div className="img-box">
-                                            <img src="assets/img/testimonial/testimonials-v2-img1.jpg" alt=""/>
-                                        </div>
-
-                                        <div className="icon-box">
-                                            <span className="icon-quote"></span>
-                                        </div>
-                                    </div>
-
-                                    <div className="testimonials-two__single-text">
-                                        <p>Bring to the table win-win strategies to ensure proactive domination. At the end
-                                            of
-                                            the day going forward normal that has evolved from
-                                            operational X is on the </p>
-                                    </div>
-
-                                    <div className="testimonials-two__single-bottom">
-                                        <h3>Danish Berlow</h3>
-                                        <p>Designer</p>
-                                    </div>
-                                </div>
-                                {/*End Testimonials Two Single */}
-                            </SwiperSlide>
-                            <SwiperSlide className="swiper-slide">
-                                {/*Start Testimonials Two Single */}
-                                <div className="testimonials-two__single">
-                                    <div className="testimonials-two__single-top">
-                                        <div className="img-box">
-                                            <img src="assets/img/testimonial/testimonials-v2-img1.jpg" alt=""/>
-                                        </div>
-
-                                        <div className="icon-box">
-                                            <span className="icon-quote"></span>
-                                        </div>
-                                    </div>
-
-                                    <div className="testimonials-two__single-text">
-                                        <p>Bring to the table win-win strategies to ensure proactive domination. At the end
-                                            of
-                                            the day going forward normal that has evolved from
-                                            operational X is on the </p>
-                                    </div>
-
-                                    <div className="testimonials-two__single-bottom">
-                                        <h3>Janes Cooper</h3>
-                                        <p>Designer</p>
-                                    </div>
-                                </div>
-                                {/*End Testimonials Two Single */}
-                            </SwiperSlide>
-
-                            <SwiperSlide className="swiper-slide">
-                                {/*Start Testimonials Two Single */}
-                                <div className="testimonials-two__single">
-                                    <div className="testimonials-two__single-top">
-                                        <div className="img-box">
-                                            <img src="assets/img/testimonial/testimonials-v2-img1.jpg" alt=""/>
-                                        </div>
-
-                                        <div className="icon-box">
-                                            <span className="icon-quote"></span>
-                                        </div>
-                                    </div>
-
-                                    <div className="testimonials-two__single-text">
-                                        <p>Bring to the table win-win strategies to ensure proactive domination. At the end
-                                            of
-                                            the day going forward normal that has evolved from
-                                            operational X is on the </p>
-                                    </div>
-
-                                    <div className="testimonials-two__single-bottom">
-                                        <h3>Anonna Aivi</h3>
-                                        <p>Designer</p>
-                                    </div>
-                                </div>
-                                {/*End Testimonials Two Single */}
-                            </SwiperSlide>
-
-                            <SwiperSlide className="swiper-slide">
-                                {/*Start Testimonials Two Single */}
-                                <div className="testimonials-two__single">
-                                    <div className="testimonials-two__single-top">
-                                        <div className="img-box">
-                                            <img src="assets/img/testimonial/testimonials-v2-img1.jpg" alt=""/>
-                                        </div>
-
-                                        <div className="icon-box">
-                                            <span className="icon-quote"></span>
-                                        </div>
-                                    </div>
-
-                                    <div className="testimonials-two__single-text">
-                                        <p>Bring to the table win-win strategies to ensure proactive domination. At the end
-                                            of
-                                            the day going forward normal that has evolved from
-                                            operational X is on the </p>
-                                    </div>
-
-                                    <div className="testimonials-two__single-bottom">
-                                        <h3>Danish Berlow</h3>
-                                        <p>Designer</p>
-                                    </div>
-                                </div>
-                                {/*End Testimonials Two Single */}
-                            </SwiperSlide>
-                        </div>
-                    </Swiper>
-
+                            </div>
+                            {/*End Why Choose Svelte Card */}
+                        </SwiperSlide>
+                    ))}
+                </div>
+            </Swiper>
         </>
     )
 }

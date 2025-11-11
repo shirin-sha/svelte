@@ -1,7 +1,8 @@
 'use client'
-import { useEffect, useState } from "react"
+import Link from "next/link"
 import { Autoplay, Navigation, Pagination } from "swiper/modules"
 import { Swiper, SwiperSlide } from "swiper/react"
+import { useEffect, useState } from 'react'
 
 const swiperOptions = {
     modules: [Autoplay, Pagination, Navigation],
@@ -54,63 +55,35 @@ const swiperOptions = {
 }
 
 export default function BrandSlider2() {
-    const [brands, setBrands] = useState([]);
-    const [loading, setLoading] = useState(true);
-
+    const [brands, setBrands] = useState([])
     useEffect(() => {
         const fetchBrands = async () => {
             try {
-                console.log('Fetching brands...');
-                const response = await fetch('/api/content/brand');
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('Brands fetched:', data);
-                    setBrands(data);
-                } else {
-                    console.error('Failed to fetch brands:', response.status);
+                const res = await fetch('/api/content/brand')
+                if (res.ok) {
+                    const data = await res.json()
+                    setBrands(Array.isArray(data) ? data : [])
                 }
-            } catch (error) {
-                console.error('Error fetching brands:', error);
-            } finally {
-                setLoading(false);
+            } catch (_) {
+                setBrands([])
             }
-        };
-
-        fetchBrands();
-    }, []);
-
-    if (loading) {
-        return (
-            <div className="brand-slider-loading" style={{ textAlign: 'center', padding: '40px 0' }}>
-                <div style={{ fontSize: '16px', color: '#666' }}>Loading brands...</div>
-            </div>
-        );
-    }
-
-    if (brands.length === 0) {
-        return null; // Don't show anything if no brands
-    }
-
+        }
+        fetchBrands()
+    }, [])
+    if (brands.length === 0) return null
     return (
         <>
             <Swiper {...swiperOptions} className="thm-swiper__slider swiper-container">
-                <div className="swiper-wrapper">
-                    {brands.map((brand, index) => (
-                        <SwiperSlide key={brand._id} className="swiper-slide">
-                            <div className="img-box">
-                                <img 
-                                    src={brand.logo} 
-                                    alt={brand.name}
-                                    style={{ 
-                                        width: brand.size?.width || 150, 
-                                        height: brand.size?.height || 80,
-                                        objectFit: 'contain'
-                                    }}
-                                />
-                            </div>
-                        </SwiperSlide>
-                    ))}
-                </div>
+                {brands.map((brand, idx) => (
+                    <SwiperSlide className="swiper-slide" key={brand._id || idx}>
+                        <div className="img-box">
+                            <img src={brand.logo} alt="Brand logo"/>
+                        </div>
+                        <div className="img-box2">
+                            <img src={brand.logo} alt="Brand logo"/>
+                        </div>
+                    </SwiperSlide>
+                ))}
             </Swiper>
         </>
     )

@@ -1,14 +1,27 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
 
-export default function BlogCMS() {
-  const router = useRouter();
+export default function BlogsPage() {
+  const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [sections, setSections] = useState([]);
-  const [updating, setUpdating] = useState({});
-  const [pageData, setPageData] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingBlog, setEditingBlog] = useState(null);
+  const [sectionData, setSectionData] = useState({
+    subtitle: '',
+    title: ''
+  });
+  const [formData, setFormData] = useState({ 
+    title: '', 
+    content: '', 
+    excerpt: '', 
+    author: '', 
+    imageUrl: '', 
+    tags: '', 
+    status: 'draft' 
+  });
+  const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -16,495 +29,333 @@ export default function BlogCMS() {
       router.push('/admin/login');
       return;
     }
-    fetchBlogPage();
+    fetchBlogs();
+    fetchSectionData();
   }, [router]);
 
-  const BLOG_SLUG = 'blog';
-
-  // Static definition aligned with app/(blog)/blog/page.js structure
-  const blogSectionBlueprint = [
-    { name: 'blog-one', title: 'Blog List', description: 'Grid of published blog posts' }
-  ];
-
-  const fetchBlogPage = async () => {
+  const fetchBlogs = async () => {
     try {
-      setLoading(true);
-      const response = await fetch(`/api/content/pages/${BLOG_SLUG}`);
+      const response = await fetch('/api/content/blog');
       if (response.ok) {
-        const page = await response.json();
-        setPageData(page);
-
-        // Merge blueprint with existing page sections by name
-        const pageSections = Array.isArray(page.sections) ? page.sections : [];
-        const merged = blogSectionBlueprint.map(blue => {
-          const existing = pageSections.find(s => s.name === blue.name);
-          return {
-            ...blue,
-            isActive: existing ? !!existing.isActive : true
-          };
-        });
-        setSections(merged);
-      } else if (response.status === 404) {
-        // If page is missing, initialize local view with defaults and create it
-        setPageData(null);
-        setSections(blogSectionBlueprint.map(s => ({ ...s, isActive: true })));
-        await createBlogPage();
+        const data = await response.json();
+        setBlogs(data);
       }
     } catch (error) {
-      console.error('Error fetching about page:', error);
+      console.error('Error fetching blogs:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const createBlogPage = async () => {
+  const fetchSectionData = async () => {
     try {
-      const res = await fetch('/api/content/pages', {
-        method: 'POST',
+      const response = await fetch('/api/content/pages/home/sections/blog');
+      if (response.ok) {
+        const section = await response.json();
+        let parsed = null;
+        try {
+          parsed = section?.content?.en ? JSON.parse(section.content.en) : null;
+        } catch (_) {
+          parsed = null;
+        }
+        if (parsed) {
+          setSectionData(prev => ({
+            ...prev,
+            subtitle: parsed.subtitle || prev.subtitle,
+            title: parsed.title || prev.title
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching section data:', error);
+    }
+  };
+
+  const handleSectionSave = async () => {
+    try {
+      const response = await fetch('/api/content/pages/home/sections/blog', {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: 'Blog',
-          slug: BLOG_SLUG,
-          metaTitle: { en: 'BLOG | ENMAA', ar: '' },
-          metaDescription: { en: 'Latest articles and company news.', ar: '' },
-          sections: blogSectionBlueprint.map((s, idx) => ({
-            name: s.name,
-            title: { en: s.title, ar: '' },
-            content: { en: '', ar: '' },
-            image: '',
-            isActive: true,
-            order: idx + 1,
-            type: 'text'
-          }))
+          content: {
+            en: JSON.stringify({ title: sectionData.title, subtitle: sectionData.subtitle })
+          }
         })
       });
-      if (res.ok) {
-        const page = await res.json();
-        setPageData(page);
-      }
-    } catch (e) {
-      console.error('Failed to create blog page:', e);
-    }
-  };
-
-  const ensureSectionExists = async (sectionName, desiredActive) => {
-    try {
-      // If the page exists and already has the section, nothing to do here
-      const exists = pageData?.sections?.some(s => s.name === sectionName);
-      if (exists) return true;
-
-      // Create the section by updating the page with a merged sections array
-      const newSection = {
-        name: sectionName,
-        title: { en: blogSectionBlueprint.find(s => s.name === sectionName)?.title || sectionName, ar: '' },
-        content: { en: '', ar: '' },
-        image: '',
-        isActive: !!desiredActive,
-        order: (pageData?.sections?.length || 0) + 1,
-        type: 'text'
-      };
-
-      const body = {
-        sections: [...(pageData?.sections || []), newSection]
-      };
-
-      const res = await fetch(`/api/content/pages/${BLOG_SLUG}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-
-      if (res.ok) {
-        const updatedPage = await res.json();
-        setPageData(updatedPage);
-        return true;
-      }
-
-      console.error('Failed to add section to page');
-      return false;
-    } catch (error) {
-      console.error('Error ensuring section exists:', error);
-      return false;
-    }
-  };
-
-  const handleEdit = (sectionName) => {
-    router.push(`/admin/cms/blog/sections/${sectionName}/edit`);
-  };
-
-  const handlePreview = (sectionName) => {
-    router.push(`/blog#${sectionName}`);
-  };
-
-  const toggleSection = async (sectionName) => {
-    const currentSection = sections.find(s => s.name === sectionName);
-    if (!currentSection) return;
-
-    setUpdating(prev => ({ ...prev, [sectionName]: true }));
-
-    try {
-      // Make sure the section exists in DB before toggling
-      const ok = await ensureSectionExists(sectionName, !currentSection.isActive);
-      if (!ok) {
-        alert('Failed to prepare section for toggling');
-        return;
-      }
-
-      const response = await fetch(`/api/content/pages/${BLOG_SLUG}/sections/${sectionName}/toggle`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: !currentSection.isActive })
-      });
-
+      
       if (response.ok) {
-        // Update local state
-        setSections(prevSections =>
-          prevSections.map(section =>
-            section.name === sectionName
-              ? { ...section, isActive: !section.isActive }
-              : section
-          )
-        );
+        alert('Section settings saved successfully!');
       } else {
-        console.error('Failed to update section');
-        alert('Failed to update section visibility');
+        const errorData = await response.json();
+        console.error('API Error:', errorData);
+        alert(`Failed to save section settings: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error('Error updating section:', error);
-      alert('Error updating section visibility');
-    } finally {
-      setUpdating(prev => ({ ...prev, [sectionName]: false }));
+      console.error('Error saving section data:', error);
+      alert('Failed to save section settings: Network error');
     }
   };
 
-  if (loading) {
-    return (
-      <AdminLayout title="Blog CMS">
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          height: '400px',
-          color: '#6b7280' 
-        }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ 
-              width: 40, 
-              height: 40, 
-              border: '3px solid #e5e7eb',
-              borderTop: '3px solid #3b82f6',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              margin: '0 auto 16px'
-            }}></div>
-            <p>Loading CMS...</p>
-          </div>
-        </div>
-      </AdminLayout>
-    );
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const url = editingBlog 
+        ? `/api/content/blog/${editingBlog._id}`
+        : '/api/content/blog';
+      
+      const method = editingBlog ? 'PUT' : 'POST';
+      
+      const blogData = {
+        ...formData,
+        tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+      };
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(blogData)
+      });
+      
+      if (response.ok) {
+        setFormData({ 
+          title: '', 
+          content: '', 
+          excerpt: '', 
+          author: '', 
+          imageUrl: '', 
+          tags: '', 
+          status: 'draft' 
+        });
+        setShowForm(false);
+        setEditingBlog(null);
+        fetchBlogs();
+      }
+    } catch (error) {
+      console.error('Error saving blog:', error);
+    }
+  };
+
+  const handleEdit = (blog) => {
+    setEditingBlog(blog);
+    setFormData({
+      title: blog.title,
+      content: blog.content,
+      excerpt: blog.excerpt || '',
+      author: blog.author,
+      imageUrl: blog.imageUrl,
+      tags: blog.tags ? blog.tags.join(', ') : '',
+      status: blog.status
+    });
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Are you sure you want to delete this blog post?')) return;
+    
+    try {
+      const response = await fetch(`/api/content/blog/${id}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        fetchBlogs();
+      }
+    } catch (error) {
+      console.error('Error deleting blog:', error);
+    }
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('type', 'blogs');
+
+    try {
+      const response = await fetch('/api/upload', { method: 'POST', body: formData });
+      if (response.ok) {
+        const data = await response.json();
+        setFormData(prev => ({ ...prev, imageUrl: data.url }));
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+    }
+  };
+
+  if (loading) return <AdminLayout title="Blogs"><div>Loading...</div></AdminLayout>;
 
   return (
-    <AdminLayout title="Blog Page CMS">
-      <style jsx>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        .section-row:hover {
-          background-color: #f8fafc !important;
-        }
-        .action-btn {
-          transition: all 0.2s ease;
-        }
-        .action-btn:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        .edit-btn:hover {
-          background-color: #2563eb !important;
-        }
-        .preview-btn:hover {
-          background-color: #059669 !important;
-        }
-        .toggle-switch {
-          position: relative;
-          width: 80px;
-          height: 40px;
-          background: #e5e7eb;
-          border-radius: 20px;
-          border: none;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          overflow: hidden;
-        }
-        .toggle-switch.active {
-          background: linear-gradient(135deg, #10b981, #059669);
-          box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
-        }
-        .toggle-switch.inactive {
-          background: linear-gradient(135deg, #6b7280, #4b5563);
-          box-shadow: 0 4px 15px rgba(107, 114, 128, 0.3);
-        }
-        .toggle-switch:hover {
-          transform: scale(1.05);
-        }
-        .toggle-switch:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
-          transform: none !important;
-        }
-        .toggle-slider {
-          position: absolute;
-          top: 4px;
-          left: 4px;
-          width: 32px;
-          height: 32px;
-          background: white;
-          border-radius: 50%;
-          transition: all 0.3s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-        .toggle-slider.active {
-          transform: translateX(40px);
-        }
-        .toggle-text {
-          position: absolute;
-          font-size: 11px;
-          font-weight: 600;
-          color: white;
-          transition: all 0.3s ease;
-        }
-        .toggle-text.on {
-          left: 8px;
-          opacity: 1;
-        }
-        .toggle-text.off {
-          right: 8px;
-          opacity: 1;
-        }
-        .toggle-text.hidden {
-          opacity: 0;
-        }
-      `}</style>
+    <AdminLayout title="Manage Blogs">
+   
 
-      <div style={{ 
-        background: '#fff', 
-        borderRadius: '16px', 
-        overflow: 'hidden', 
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        border: '1px solid #e5e7eb'
-      }}>
-        <div style={{ 
-          padding: '24px 32px', 
-          borderBottom: '1px solid #e5e7eb', 
-          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600', color: '#1f2937' }}>
-              Blog Page Sections
-            </h2>
-            <div style={{ 
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              padding: '8px 16px',
-              borderRadius: '20px',
-              fontSize: '12px',
-              fontWeight: '600'
-            }}>
-              {sections.filter(s => s.isActive).length}/{sections.length} Active
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <h2>Blog Posts</h2>
+        <button 
+          onClick={() => setShowForm(!showForm)}
+          style={{ background: '#2563eb', color: 'white', border: 'none', padding: '10px 20px', borderRadius: 6, cursor: 'pointer' }}
+        >
+          {showForm ? 'Cancel' : 'Add New Blog'}
+        </button>
+      </div>
+
+      {showForm && (
+        <div style={{ background: '#fff', padding: 24, borderRadius: 8, marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <h3>{editingBlog ? 'Edit Blog Post' : 'Add New Blog Post'}</h3>
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', marginBottom: 4 }}>Title:</label>
+              <input 
+                type="text" 
+                value={formData.title} 
+                onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                required
+                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+              />
             </div>
-          </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', marginBottom: 4 }}>Author:</label>
+              <input 
+                type="text" 
+                value={formData.author} 
+                onChange={e => setFormData(prev => ({ ...prev, author: e.target.value }))}
+                required
+                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+              />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', marginBottom: 4 }}>Excerpt:</label>
+              <textarea 
+                value={formData.excerpt} 
+                onChange={e => setFormData(prev => ({ ...prev, excerpt: e.target.value }))}
+                rows={3}
+                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+              />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', marginBottom: 4 }}>Content:</label>
+              <textarea 
+                value={formData.content} 
+                onChange={e => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                required
+                rows={8}
+                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+              />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', marginBottom: 4 }}>Tags (comma-separated):</label>
+              <input 
+                type="text" 
+                value={formData.tags} 
+                onChange={e => setFormData(prev => ({ ...prev, tags: e.target.value }))}
+                placeholder="design, architecture, interior"
+                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+              />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', marginBottom: 4 }}>Status:</label>
+              <select 
+                value={formData.status} 
+                onChange={e => setFormData(prev => ({ ...prev, status: e.target.value }))}
+                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+              >
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </select>
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', marginBottom: 4 }}>Image:</label>
+              <div style={{ 
+                background: '#f8f9fa', 
+                padding: 12, 
+                borderRadius: 4, 
+                marginBottom: 8,
+                border: '1px solid #e9ecef'
+              }}>
+                <strong>📏 Recommended Size:</strong> 800×600 pixels (Blog post images)
+                <br />
+                <small style={{ color: '#6c757d' }}>
+                  • Format: JPG, PNG, WebP
+                  • Max file size: 1MB
+                  • Aspect ratio: 4:3 (standard blog image)
+                </small>
+              </div>
+              <input 
+                type="file" 
+                accept="image/*"
+                onChange={handleImageUpload}
+                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+              />
+            </div>
+            {formData.imageUrl && (
+              <div style={{ marginBottom: 16 }}>
+                <img src={formData.imageUrl} alt="Preview" style={{ maxWidth: 200, height: 'auto' }} />
+              </div>
+            )}
+            <button type="submit" style={{ background: '#10b981', color: 'white', border: 'none', padding: '10px 20px', borderRadius: 6, cursor: 'pointer' }}>
+              {editingBlog ? 'Update Blog Post' : 'Create Blog Post'}
+            </button>
+          </form>
         </div>
-        
-        <div style={{ overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: '#f9fafb' }}>
-                <th style={{ 
-                  padding: '16px 32px', 
-                  textAlign: 'left', 
-                  borderBottom: '1px solid #e5e7eb', 
-                  fontWeight: '600',
-                  color: '#374151',
-                  fontSize: '14px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em'
-                }}>
-                  Section
-                </th>
-                <th style={{ 
-                  padding: '16px 32px', 
-                  textAlign: 'left', 
-                  borderBottom: '1px solid #e5e7eb', 
-                  fontWeight: '600',
-                  color: '#374151',
-                  fontSize: '14px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em'
-                }}>
-                  Title
-                </th>
-                <th style={{ 
-                  padding: '16px 32px', 
-                  textAlign: 'center', 
-                  borderBottom: '1px solid #e5e7eb', 
-                  fontWeight: '600',
-                  color: '#374151',
-                  fontSize: '14px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em'
-                }}>
-                  Visibility
-                </th>
-                <th style={{ 
-                  padding: '16px 32px', 
-                  textAlign: 'center', 
-                  borderBottom: '1px solid #e5e7eb', 
-                  fontWeight: '600',
-                  color: '#374151',
-                  fontSize: '14px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em'
-                }}>
-                  Actions
-                </th>
+      )}
+
+      <div style={{ background: '#fff', borderRadius: 8, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ background: '#f9fafb' }}>
+              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Image</th>
+              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Title</th>
+              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Author</th>
+              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Status</th>
+              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {blogs.length === 0 ? (
+              <tr>
+                <td colSpan="5" style={{ padding: 24, textAlign: 'center', color: '#6b7280' }}>
+                  No blog posts found. Create your first blog post above.
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {sections.map((section, index) => (
-                <tr 
-                  key={section.name} 
-                  className="section-row"
-                  style={{ 
-                    borderBottom: index < sections.length - 1 ? '1px solid #f3f4f6' : 'none',
-                    transition: 'background-color 0.2s ease'
-                  }}
-                >
-                  <td style={{ padding: '20px 32px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <div>
-                        <div style={{ 
-                          fontWeight: '600', 
-                          color: '#111827',
-                          fontSize: '16px',
-                          marginBottom: '4px'
-                        }}>
-                          {section.title}
-                        </div>
-                        <div style={{ 
-                          color: '#6b7280',
-                          fontSize: '14px'
-                        }}>
-                          {section.description}
-                        </div>
-                      </div>
-                    </div>
+            ) : (
+              blogs.map(blog => (
+                <tr key={blog._id}>
+                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
+                    <img src={blog.imageUrl} alt={blog.title} style={{ width: 60, height: 40, objectFit: 'cover', borderRadius: 4 }} />
                   </td>
-                  <td style={{ padding: '20px 32px' }}>
-                    <div style={{ 
-                      background: '#f3f4f6',
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      display: 'inline-block',
-                      fontSize: '14px',
-                      color: '#374151',
-                      fontWeight: '500'
+                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>{blog.title}</td>
+                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>{blog.author}</td>
+                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
+                    <span style={{ 
+                      padding: '4px 8px', 
+                      borderRadius: 4, 
+                      fontSize: 12,
+                      background: blog.status === 'published' ? '#10b981' : '#f59e0b',
+                      color: 'white'
                     }}>
-                      {section.name.replace('-', ' ')}
-                    </div>
+                      {blog.status}
+                    </span>
                   </td>
-                  <td style={{ padding: '20px 32px', textAlign: 'center' }}>
-                    <button
-                      onClick={() => toggleSection(section.name)}
-                      disabled={updating[section.name]}
-                      className={`toggle-switch ${section.isActive ? 'active' : 'inactive'}`}
-                      title={section.isActive ? 'Click to hide section' : 'Click to show section'}
+                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
+                    <button 
+                      onClick={() => handleEdit(blog)}
+                      style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '6px 12px', borderRadius: 4, marginRight: 8, cursor: 'pointer' }}
                     >
-                      <div className={`toggle-slider ${section.isActive ? 'active' : ''}`}>
-                        {updating[section.name] ? (
-                          <div style={{ 
-                            width: 16, 
-                            height: 16, 
-                            border: '2px solid #e5e7eb',
-                            borderTop: '2px solid #3b82f6',
-                            borderRadius: '50%',
-                            animation: 'spin 1s linear infinite'
-                          }}></div>
-                        ) : (
-                          <div style={{ 
-                            fontSize: '14px',
-                            color: section.isActive ? '#10b981' : '#6b7280'
-                          }}>
-                            {section.isActive ? '✓' : '✕'}
-                          </div>
-                        )}
-                      </div>
-                      <span className={`toggle-text ${section.isActive ? 'on' : 'off'}`}>
-                        {section.isActive ? 'ON' : 'OFF'}
-                      </span>
+                      Edit
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(blog._id)}
+                      style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: 4, cursor: 'pointer' }}
+                    >
+                      Delete
                     </button>
                   </td>
-                  <td style={{ padding: '20px 32px', textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                      <button
-                        onClick={() => handleEdit(section.name)}
-                        className="action-btn edit-btn"
-                        style={{ 
-                          background: '#3b82f6', 
-                          color: '#fff', 
-                          border: 'none', 
-                          padding: '10px 16px', 
-                          borderRadius: '8px', 
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          fontWeight: '500',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}
-                        title={`${section.title}`}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                          <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handlePreview(section.name)}
-                        className="action-btn preview-btn"
-                        style={{ 
-                          background: '#10b981', 
-                          color: '#fff', 
-                          border: 'none', 
-                          padding: '10px 16px', 
-                          borderRadius: '8px', 
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          fontWeight: '500',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}
-                        title={`Preview ${section.title}`}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                          <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
-                        Preview
-                      </button>
-                    </div>
-                  </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </AdminLayout>
   );

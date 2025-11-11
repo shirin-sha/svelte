@@ -24,18 +24,18 @@ export default function HomeCMS() {
       if (response.ok) {
         const apiSections = await response.json();
         
-        // Map API sections with descriptions
+        // Map API sections
         const sectionsWithDescriptions = [
-          { name: 'banner', title: 'Banner', description: 'Main hero slider section' },
-          { name: 'features', title: 'Features', description: 'Key features showcase' },
-          { name: 'about', title: 'About', description: 'About us section' },
-          { name: 'services', title: 'Services', description: 'Services we provide' },
-          { name: 'projects', title: 'Projects', description: 'Portfolio and projects' },
-          { name: 'contact', title: 'Contact', description: 'Contact information and form' },
-          { name: 'brand', title: 'Brand', description: 'Brand logos and partners' },
-          { name: 'why-choose-us', title: 'Why Choose Us', description: 'Why choose our company' },
-          { name: 'action', title: 'Call to Action', description: 'Call to action section' },
-          { name: 'blog', title: 'Blog', description: 'Latest blog posts' }
+          { name: 'banner', title: 'Hero Section' },
+          { name: 'features', title: 'Features' },
+          { name: 'about', title: 'About' },
+          { name: 'services', title: 'Services' },
+          { name: 'projects', title: 'Projects' },
+          { name: 'contact', title: 'Contact' },
+          { name: 'brand', title: 'Brand' },
+          { name: 'why-choose-us', title: 'Why Choose Us' },
+          { name: 'action', title: 'Call to Action' },
+          { name: 'blog', title: 'Blog' }
         ];
 
         // Merge with API data
@@ -60,10 +60,6 @@ export default function HomeCMS() {
   
         router.push(`/admin/cms/home/${sectionName}`);
 
-  };
-
-  const handlePreview = (sectionName) => {
-    router.push(`#`);
   };
 
   const toggleSection = async (sectionName) => {
@@ -316,16 +312,9 @@ export default function HomeCMS() {
                         <div style={{ 
                           fontWeight: '600', 
                           color: '#111827',
-                          fontSize: '16px',
-                          marginBottom: '4px'
+                          fontSize: '16px'
                         }}>
                           {section.title}
-                        </div>
-                        <div style={{ 
-                          color: '#6b7280',
-                          fontSize: '14px'
-                        }}>
-                          {section.description}
                         </div>
                       </div>
                     </div>
@@ -399,30 +388,6 @@ export default function HomeCMS() {
                           <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                         </svg>
                         Edit
-                      </button>
-                      <button
-                        onClick={() => handlePreview(section.name)}
-                        className="action-btn preview-btn"
-                        style={{ 
-                          background: '#10b981', 
-                          color: '#fff', 
-                          border: 'none', 
-                          padding: '10px 16px', 
-                          borderRadius: '8px', 
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          fontWeight: '500',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}
-                        title={`Preview ${section.title}`}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                          <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
-                        Preview
                       </button>
                     </div>
                   </td>

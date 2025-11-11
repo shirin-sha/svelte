@@ -7,20 +7,11 @@ export default function WhyChooseUsPage() {
   const [whyChooseUsData, setWhyChooseUsData] = useState({
     features: [
       {
-        icon: 'icon-office-building',
-        title: 'Architecture Design',
-        description: 'Through a unique coN construction and design discipl nes expertise Concor and delivers'
+        icon: '',
+        title: '',
+        description: ''
       },
-      {
-        icon: 'icon-bed',
-        title: 'The Joy of Best Living',
-        description: 'Through a unique coN construction and design discipl nes expertise Concor and delivers'
-      },
-      {
-        icon: 'icon-targeted',
-        title: 'Professional Planning',
-        description: 'Through a unique coN construction and design discipl nes expertise Concor and delivers'
-      }
+    
     ],
     leftImage1: 'assets/img/resource/why-choose-us-v1-img1.jpg',
     leftImage2: 'assets/img/resource/why-choose-us-v1-img2.jpg',
@@ -428,6 +419,19 @@ export default function WhyChooseUsPage() {
     </AdminLayout>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

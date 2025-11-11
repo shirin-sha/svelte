@@ -2,21 +2,21 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
+import { Input, Textarea } from '@/components/forms';
 
 export default function AboutAdmin() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingImage1, setUploadingImage1] = useState(false);
-  const [uploadingImage2, setUploadingImage2] = useState(false);
   
   const [formData, setFormData] = useState({
     title: 'We Take Care of Everything for Your Goals',
     subtitle: 'KNOW ABOUT SVELTE',
     description: 'Nullam eu nibh vitae est tempor molestie id sed ex. Quisque dignissim maximus ipsum, sed rutrum metus tincidunt et. Sed eget tincidunt ipsum. Eget tincidunt',
     image1: 'assets/img/about/about-v2-img1.jpg',
-    image2: 'assets/img/about/about-v2-img2.jpg',
-    videoId: 'vfhzo499OeA',
+    buttonText: '',
+    buttonUrl: '',
     bullets: [
       'Feasiblity Studies',
       'Conceptual Design',
@@ -45,9 +45,17 @@ export default function AboutAdmin() {
           parsed = null;
         }
         if (parsed) {
+          // Map API fields to admin form fields
           setFormData(prev => ({
             ...prev,
-            ...parsed
+            title: parsed.title || prev.title,
+            // If a split title is used, append or ignore based on availability
+            subtitle: parsed.topText || prev.subtitle,
+            description: parsed.description || prev.description,
+            image1: parsed.imageUrl || prev.image1,
+            bullets: Array.isArray(parsed.bullets) ? parsed.bullets : prev.bullets,
+            buttonText: parsed.buttonText || prev.buttonText,
+            buttonUrl: parsed.buttonUrl || prev.buttonUrl,
           }));
         }
       }
@@ -89,8 +97,7 @@ export default function AboutAdmin() {
   };
 
   const uploadImage = async (file, imageField) => {
-    const uploadingSetter = imageField === 'image1' ? setUploadingImage1 : setUploadingImage2;
-    uploadingSetter(true);
+    setUploadingImage1(true);
     
     try {
       const form = new FormData();
@@ -104,7 +111,7 @@ export default function AboutAdmin() {
       console.error('Error uploading image:', error);
       alert('Failed to upload image');
     } finally {
-      uploadingSetter(false);
+      setUploadingImage1(false);
     }
   };
 
@@ -118,9 +125,20 @@ export default function AboutAdmin() {
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Only persist fields used by the frontend
+      const clean = {
+        topText: formData.subtitle || '',
+        title: formData.title || '',
+        // Keeping title2 optional; admin can be extended later if needed
+        description: formData.description || '',
+        bullets: Array.isArray(formData.bullets) ? formData.bullets : [],
+        imageUrl: formData.image1 || '',
+        buttonText: formData.buttonText || '',
+        buttonUrl: formData.buttonUrl || ''
+      };
       const payload = {
         content: {
-          en: JSON.stringify(formData)
+          en: JSON.stringify(clean)
         }
       };
       
@@ -184,7 +202,7 @@ export default function AboutAdmin() {
         borderRadius: '16px', 
         padding: '32px', 
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-        maxWidth: '1000px'
+        width: '100%'
       }}>
         <div style={{ 
           display: 'flex', 
@@ -222,171 +240,47 @@ export default function AboutAdmin() {
         </div>
 
         <div style={{ display: 'grid', gap: '24px' }}>
-          {/* Subtitle */}
-          <div>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '8px', 
-              fontWeight: '600', 
-              color: '#374151' 
-            }}>
-              Subtitle
-            </label>
-            <input
-              type="text"
-              value={formData.subtitle}
-              onChange={(e) => handleInputChange('subtitle', e.target.value)}
-              placeholder="e.g., KNOW ABOUT SVELTE"
-              style={{ 
-                width: '100%', 
-                padding: '12px', 
-                border: '1px solid #d1d5db', 
-                borderRadius: '8px',
-                fontSize: '14px'
-              }}
-            />
-          </div>
+          <Input
+            label="Subtitle"
+            value={formData.subtitle}
+            onChange={(e) => handleInputChange('subtitle', e.target.value)}
+            placeholder="e.g., KNOW ABOUT SVELTE"
+          />
 
-          {/* Title */}
-          <div>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '8px', 
-              fontWeight: '600', 
-              color: '#374151' 
-            }}>
-              Main Title
-            </label>
-            <textarea
-              value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-              placeholder="Main heading for the about section"
-              rows={3}
-              style={{ 
-                width: '100%', 
-                padding: '12px', 
-                border: '1px solid #d1d5db', 
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontFamily: 'inherit'
-              }}
-            />
-          </div>
+          <Textarea
+            label="Main Title"
+            value={formData.title}
+            onChange={(e) => handleInputChange('title', e.target.value)}
+            placeholder="Main heading for the about section"
+            rows={3}
+          />
 
-          {/* Description */}
-          <div>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '8px', 
-              fontWeight: '600', 
-              color: '#374151' 
-            }}>
-              Description
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Description text for the about section"
-              rows={4}
-              style={{ 
-                width: '100%', 
-                padding: '12px', 
-                border: '1px solid #d1d5db', 
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontFamily: 'inherit'
-              }}
+          <Textarea
+            label="Description"
+            value={formData.description}
+            onChange={(e) => handleInputChange('description', e.target.value)}
+            placeholder="Description text for the about section"
+            rows={4}
+          />
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <Input
+              label="Button Text"
+              value={formData.buttonText || ''}
+              onChange={(e) => handleInputChange('buttonText', e.target.value)}
+              placeholder="e.g., Discover More"
+              style={{ marginBottom: 0 }}
+            />
+            <Input
+              label="Button URL"
+              value={formData.buttonUrl || ''}
+              onChange={(e) => handleInputChange('buttonUrl', e.target.value)}
+              placeholder="e.g., /about"
+              style={{ marginBottom: 0 }}
             />
           </div>
 
           {/* Images */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-            {/* Image 1 */}
-            <div>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '8px', 
-                fontWeight: '600', 
-                color: '#374151' 
-              }}>
-                Main Image
-              </label>
-              <div style={{ 
-                border: '2px dashed #d1d5db', 
-                borderRadius: '8px', 
-                padding: '16px', 
-                textAlign: 'center' 
-              }}>
-                {formData.image1 && (
-                  <img 
-                    src={formData.image1} 
-                    alt="Main about image" 
-                    style={{ 
-                      width: '100%', 
-                      maxHeight: '200px', 
-                      objectFit: 'cover', 
-                      borderRadius: '6px', 
-                      marginBottom: '12px' 
-                    }} 
-                  />
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload(e, 'image1')}
-                  disabled={uploadingImage1}
-                  style={{ marginBottom: '8px' }}
-                />
-                {uploadingImage1 && (
-                  <div style={{ color: '#3b82f6', fontSize: '12px' }}>Uploading...</div>
-                )}
-              </div>
-            </div>
-
-            {/* Image 2 */}
-            <div>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '8px', 
-                fontWeight: '600', 
-                color: '#374151' 
-              }}>
-                Secondary Image (with video button)
-              </label>
-              <div style={{ 
-                border: '2px dashed #d1d5db', 
-                borderRadius: '8px', 
-                padding: '16px', 
-                textAlign: 'center' 
-              }}>
-                {formData.image2 && (
-                  <img 
-                    src={formData.image2} 
-                    alt="Secondary about image" 
-                    style={{ 
-                      width: '100%', 
-                      maxHeight: '200px', 
-                      objectFit: 'cover', 
-                      borderRadius: '6px', 
-                      marginBottom: '12px' 
-                    }} 
-                  />
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload(e, 'image2')}
-                  disabled={uploadingImage2}
-                  style={{ marginBottom: '8px' }}
-                />
-                {uploadingImage2 && (
-                  <div style={{ color: '#3b82f6', fontSize: '12px' }}>Uploading...</div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Video ID */}
           <div>
             <label style={{ 
               display: 'block', 
@@ -394,29 +288,40 @@ export default function AboutAdmin() {
               fontWeight: '600', 
               color: '#374151' 
             }}>
-              YouTube Video ID
+              Main Image
             </label>
-            <input
-              type="text"
-              value={formData.videoId}
-              onChange={(e) => handleInputChange('videoId', e.target.value)}
-              placeholder="e.g., vfhzo499OeA"
-              style={{ 
-                width: '100%', 
-                padding: '12px', 
-                border: '1px solid #d1d5db', 
-                borderRadius: '8px',
-                fontSize: '14px'
-              }}
-            />
-            <p style={{ 
-              margin: '4px 0 0 0', 
-              fontSize: '12px', 
-              color: '#6b7280' 
+            <div style={{ 
+              border: '2px dashed #d1d5db', 
+              borderRadius: '8px', 
+              padding: '16px', 
+              textAlign: 'center' 
             }}>
-              Extract the video ID from YouTube URL (the part after v=)
-            </p>
+              {formData.image1 && (
+                <img 
+                  src={formData.image1} 
+                  alt="Main about image" 
+                  style={{ 
+                    width: '100%', 
+                    maxHeight: '200px', 
+                    objectFit: 'cover', 
+                    borderRadius: '6px', 
+                    marginBottom: '12px' 
+                  }} 
+                />
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageUpload(e, 'image1')}
+                disabled={uploadingImage1}
+                style={{ marginBottom: '8px' }}
+              />
+              {uploadingImage1 && (
+                <div style={{ color: '#3b82f6', fontSize: '12px' }}>Uploading...</div>
+              )}
+            </div>
           </div>
+
 
           {/* Bullet Points */}
           <div>

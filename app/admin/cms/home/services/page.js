@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
+import { Input, Textarea } from '@/components/forms';
 
 export default function ServicesPage() {
   const [services, setServices] = useState([]);
@@ -10,17 +11,17 @@ export default function ServicesPage() {
   const [editingService, setEditingService] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [sectionData, setSectionData] = useState({
+    title: 'Our Services',
+    subtitle: 'WHAT WE DO',
+    buttonText: 'EXPLORE SERVICE',
+    cardImageUrl: 'assets/img/service/service-v2-single-bg.jpg'
+  });
+  const [sectionUploading, setSectionUploading] = useState(false);
   const [formData, setFormData] = useState({ 
     title: '', 
-    description: '', 
     shortDescription: '',
-    icon: '', 
-    imageFile: null,
-    imageUrl: '',
-    content: '',
-    features: [],
-    benefits: [],
-    featured: false
+    icon: ''
   });
   const router = useRouter();
 
@@ -31,6 +32,7 @@ export default function ServicesPage() {
       return;
     }
     fetchServices();
+    fetchSectionData();
   }, [router]);
 
   const fetchServices = async () => {
@@ -47,51 +49,102 @@ export default function ServicesPage() {
     }
   };
 
+  const fetchSectionData = async () => {
+    try {
+      const response = await fetch('/api/content/pages/home/sections/services');
+      if (response.ok) {
+        const section = await response.json();
+        let parsed = null;
+        try {
+          parsed = section?.content?.en ? JSON.parse(section.content.en) : null;
+        } catch (_) {
+          parsed = null;
+        }
+        if (parsed) {
+          setSectionData(prev => ({
+            ...prev,
+            title: parsed.title || prev.title,
+            subtitle: parsed.subtitle || prev.subtitle,
+            buttonText: parsed.buttonText || prev.buttonText,
+            cardImageUrl: parsed.cardImageUrl || prev.cardImageUrl
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching section data:', error);
+    }
+  };
+
+  const handleSectionSave = async () => {
+    try {
+      const payload = {
+        content: {
+          en: JSON.stringify(sectionData)
+        }
+      };
+      
+      const res = await fetch('/api/content/pages/home/sections/services', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      if (res.ok) {
+        alert('Services section updated successfully!');
+        await fetchSectionData();
+      } else {
+        alert('Failed to save section changes');
+      }
+    } catch (error) {
+      console.error('Error saving section data:', error);
+      alert('Error saving section changes');
+    }
+  };
+
+  const handleSectionImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert('File size must be less than 2MB');
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+    setSectionUploading(true);
+    try {
+      const form = new FormData();
+      form.append('image', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: form });
+      if (!res.ok) throw new Error('Upload failed');
+      const json = await res.json();
+      setSectionData(prev => ({ ...prev, cardImageUrl: json.url }));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to upload image');
+    } finally {
+      setSectionUploading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Validate required fields
-    if (!formData.title || !formData.description || !formData.shortDescription || !formData.icon || !formData.content) {
-      alert('Please fill in all required fields: Title, Description, Short Description, Icon, and Content');
+    if (!formData.title || !formData.shortDescription || !formData.icon) {
+      alert('Please fill in all required fields: Title, Short Description, and Icon');
       return;
     }
     
     setIsSubmitting(true);
     
     try {
-      let finalImageUrl = formData.imageUrl;
-      
-      // Upload image if file is selected
-      if (formData.imageFile) {
-        const uploadFormData = new FormData();
-        uploadFormData.append('image', formData.imageFile);
-        
-        const uploadResponse = await fetch('/api/upload', { 
-          method: 'POST', 
-          body: uploadFormData 
-        });
-        
-        if (uploadResponse.ok) {
-          const uploadData = await uploadResponse.json();
-          finalImageUrl = uploadData.url;
-        } else {
-          alert('Failed to upload image. Please try again.');
-          setIsSubmitting(false);
-          return;
-        }
-      }
-      
-      // Prepare service data
+      // Prepare service data (minimal fields)
       const serviceData = {
         title: formData.title,
-        description: formData.description,
         shortDescription: formData.shortDescription,
-        icon: formData.icon,
-        imageUrl: finalImageUrl,
-        content: formData.content,
-        features: formData.features,
-        benefits: formData.benefits,
-        featured: formData.featured
+        icon: formData.icon
       };
       console.log(serviceData);
       const url = editingService 
@@ -115,15 +168,8 @@ export default function ServicesPage() {
         
         setFormData({ 
           title: '', 
-          description: '', 
           shortDescription: '',
-          icon: '', 
-          imageFile: null,
-          imageUrl: '',
-          content: '',
-          features: [],
-          benefits: [],
-          featured: false
+          icon: ''
         });
         setShowForm(false);
         setEditingService(null);
@@ -146,15 +192,8 @@ export default function ServicesPage() {
     setEditingService(service);
     setFormData({
       title: service.title,
-      description: service.description,
       shortDescription: service.shortDescription || '',
-      icon: service.icon || '',
-      imageFile: null,
-      imageUrl: service.imageUrl || '',
-      content: service.content || '',
-      features: service.features || [],
-      benefits: service.benefits || [],
-      featured: service.featured || false
+      icon: service.icon || ''
     });
     setShowForm(true);
   };
@@ -203,8 +242,108 @@ export default function ServicesPage() {
 
   return (
     <AdminLayout title="Manage Services">
+      {/* Section Title Form */}
+      <div style={{ background: '#fff', padding: 24, borderRadius: 8, marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+        <h2 style={{ marginBottom: 24 }}>Services Section Settings</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: 8, fontWeight: '600', color: '#374151' }}>
+              Small Title (Subtitle)
+            </label>
+            <input
+              type="text"
+              value={sectionData.subtitle}
+              onChange={(e) => setSectionData(prev => ({ ...prev, subtitle: e.target.value }))}
+              placeholder="e.g., WHAT WE DO"
+              style={{ 
+                width: '100%', 
+                padding: '12px', 
+                border: '1px solid #d1d5db', 
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: 8, fontWeight: '600', color: '#374151' }}>
+              Main Title
+            </label>
+            <input
+              type="text"
+              value={sectionData.title}
+              onChange={(e) => setSectionData(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="e.g., Our Services"
+              style={{ 
+                width: '100%', 
+                padding: '12px', 
+                border: '1px solid #d1d5db', 
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+            />
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: 8, fontWeight: '600', color: '#374151' }}>
+              Button Text
+            </label>
+            <input
+              type="text"
+              value={sectionData.buttonText}
+              onChange={(e) => setSectionData(prev => ({ ...prev, buttonText: e.target.value }))}
+              placeholder="e.g., EXPLORE SERVICE"
+              style={{ 
+                width: '100%', 
+                padding: '12px', 
+                border: '1px solid #d1d5db', 
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: 8, fontWeight: '600', color: '#374151' }}>
+              Card Image
+            </label>
+            {sectionData.cardImageUrl && (
+              <div style={{ marginBottom: 8 }}>
+                <img src={sectionData.cardImageUrl} alt="Card background" style={{ maxWidth: '100%', height: 'auto', borderRadius: 6 }} />
+              </div>
+            )}
+            <input 
+              type="file" 
+              accept="image/*"
+              onChange={handleSectionImageUpload}
+              disabled={sectionUploading}
+              style={{ width: '100%', padding: 10, border: '1px solid #d1d5db', borderRadius: 8 }}
+            />
+            {sectionUploading && <div style={{ color: '#3b82f6', fontSize: 12, marginTop: 6 }}>Uploading...</div>}
+          </div>
+        </div>
+        <div style={{ marginTop: 16 }}>
+          <button 
+            onClick={handleSectionSave}
+            style={{ 
+              background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', 
+              color: '#fff', 
+              border: 'none', 
+              padding: '12px 24px', 
+              borderRadius: '8px', 
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '600',
+              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+            }}
+          >
+            Save Section Settings
+          </button>
+        </div>
+      </div>
+
+      {/* Services Management */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h2>Services</h2>
+        <h2>Services List</h2>
         <button 
           onClick={() => setShowForm(!showForm)}
           style={{ background: '#2563eb', color: 'white', border: 'none', padding: '10px 20px', borderRadius: 6, cursor: 'pointer' }}
@@ -217,131 +356,37 @@ export default function ServicesPage() {
         <div style={{ background: '#fff', padding: 24, borderRadius: 8, marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
           <h3>{editingService ? 'Edit Service' : 'Add New Service'}</h3>
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Title:</label>
-              <input 
-                type="text" 
-                value={formData.title} 
-                onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                required
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
+            <Input
+              label="Title"
+              value={formData.title}
+              onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              required
+            />
             
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Short Description:</label>
-              <textarea 
-                value={formData.shortDescription} 
-                onChange={e => setFormData(prev => ({ ...prev, shortDescription: e.target.value }))}
-                required
-                rows={2}
-                placeholder="Brief description for service cards"
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
+            <Textarea
+              label="Short Description"
+              value={formData.shortDescription}
+              onChange={e => setFormData(prev => ({ ...prev, shortDescription: e.target.value }))}
+              required
+              rows={2}
+              placeholder="Brief description for service cards"
+            />
             
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Full Description:</label>
-              <textarea 
-                value={formData.description} 
-                onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                required
-                rows={3}
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
-            
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Content (HTML):</label>
-              <textarea 
-                value={formData.content} 
-                onChange={e => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                required
-                rows={6}
-                placeholder="Full HTML content for service details page"
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: 4 }}>Icon:</label>
+            <div>
+              <label style={{ display: 'block', marginBottom: 8, fontWeight: '600', color: '#374151' }}>Icon</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <input 
                   type="text" 
                   value={formData.icon} 
                   onChange={e => setFormData(prev => ({ ...prev, icon: e.target.value }))}
                   required
-                  placeholder="icon-construction-machine"
-                  style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+                  placeholder="Enter icon"
+                  style={{ flex: 1, padding: 12, border: '1px solid #d1d5db', borderRadius: 8, fontSize: '14px', fontFamily: 'inherit' }}
                 />
-                <small style={{ color: '#6c757d' }}>Use icon class names from your CSS</small>
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: 4 }}>Service Image:</label>
-                <div style={{ 
-                  background: '#f8f9fa', 
-                  padding: 12, 
-                  borderRadius: 4, 
-                  marginBottom: 8,
-                  border: '1px solid #e9ecef'
-                }}>
-                  <strong>📏 Recommended Size:</strong> 800×600 pixels (Service detail images)
-                  <br />
-                  <small style={{ color: '#6c757d' }}>
-                    • Format: JPG, PNG, WebP
-                    • Max file size: 2MB
-                    • Aspect ratio: 4:3 (landscape)
-                  </small>
-                </div>
-                <input 
-                  type="file" 
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                />
-                {formData.imageUrl && (
-                  <div style={{ marginTop: 8 }}>
-                    <img src={formData.imageUrl} alt="Preview" style={{ maxWidth: 200, height: 'auto', borderRadius: 4 }} />
-                  </div>
-                )}
+                <i className={formData.icon} style={{ fontSize: 24, width: 28, textAlign: 'center' }} />
               </div>
             </div>
             
-
-            
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
-                <input 
-                  type="checkbox" 
-                  checked={formData.featured}
-                  onChange={e => setFormData(prev => ({ ...prev, featured: e.target.checked }))}
-                  style={{ marginRight: 8 }}
-                />
-                Featured Service
-              </label>
-            </div>
-            
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Features (one per line):</label>
-              <textarea 
-                value={formData.features.join('\n')} 
-                onChange={e => setFormData(prev => ({ ...prev, features: e.target.value.split('\n').filter(f => f.trim()) }))}
-                rows={4}
-                placeholder="Feature 1&#10;Feature 2&#10;Feature 3"
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
-            
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Benefits (one per line):</label>
-              <textarea 
-                value={formData.benefits.join('\n')} 
-                onChange={e => setFormData(prev => ({ ...prev, benefits: e.target.value.split('\n').filter(b => b.trim()) }))}
-                rows={4}
-                placeholder="Benefit 1&#10;Benefit 2&#10;Benefit 3"
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
             
             <button type="submit" style={{ background: '#10b981', color: 'white', border: 'none', padding: '10px 20px', borderRadius: 6, cursor: 'pointer' }}>
               {editingService ? 'Update Service' : 'Create Service'}

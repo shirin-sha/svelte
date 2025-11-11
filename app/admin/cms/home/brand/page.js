@@ -9,13 +9,7 @@ export default function BrandsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingBrand, setEditingBrand] = useState(null);
   const [formData, setFormData] = useState({
-    name: '',
-    logo: '',
-    size: { width: 150, height: 80 },
-    description: '',
-    website: '',
-    order: 0,
-    isActive: true
+    logo: ''
   });
   const router = useRouter();
 
@@ -45,28 +39,35 @@ export default function BrandsPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      if (!formData.logo) {
+        alert('Please upload a logo image');
+        return;
+      }
       const url = editingBrand 
         ? `/api/content/brand/${editingBrand._id}`
         : '/api/content/brand';
       
       const method = editingBrand ? 'PUT' : 'POST';
       
+      const payload = editingBrand 
+        ? { ...editingBrand, logo: formData.logo }
+        : {
+            // Provide minimal defaults some APIs/models expect
+            name: 'Brand',
+            logo: formData.logo,
+            size: { width: 150, height: 80 },
+            website: '',
+            order: brands.length || 0,
+            isActive: true
+          };
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
       
       if (response.ok) {
-        setFormData({
-          name: '',
-          logo: '',
-          size: { width: 150, height: 80 },
-          description: '',
-          website: '',
-          order: 0,
-          isActive: true
-        });
+        setFormData({ logo: '' });
         setShowForm(false);
         setEditingBrand(null);
         fetchBrands();
@@ -78,15 +79,7 @@ export default function BrandsPage() {
 
   const handleEdit = (brand) => {
     setEditingBrand(brand);
-    setFormData({
-      name: brand.name,
-      logo: brand.logo,
-      size: brand.size || { width: 150, height: 80 },
-      description: brand.description || '',
-      website: brand.website || '',
-      order: brand.order || 0,
-      isActive: brand.isActive
-    });
+    setFormData({ logo: brand.logo || '' });
     setShowForm(true);
   };
 
@@ -141,18 +134,8 @@ export default function BrandsPage() {
 
       {showForm && (
         <div style={{ background: '#fff', padding: 24, borderRadius: 8, marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-          <h3>{editingBrand ? 'Edit Brand' : 'Add New Brand'}</h3>
+          <h3>{editingBrand ? 'Edit Logo' : 'Add New Logo'}</h3>
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Brand Name:</label>
-              <input 
-                type="text" 
-                value={formData.name} 
-                onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                required
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', marginBottom: 4 }}>Logo:</label>
               <div style={{ 
@@ -183,64 +166,9 @@ export default function BrandsPage() {
                 <img src={formData.logo} alt="Preview" style={{ maxWidth: 200, height: 'auto' }} />
               </div>
             )}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Description:</label>
-              <textarea 
-                value={formData.description} 
-                onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                rows={3}
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Website:</label>
-              <input 
-                type="url" 
-                value={formData.website} 
-                onChange={e => setFormData(prev => ({ ...prev, website: e.target.value }))}
-                placeholder="https://example.com"
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
-            <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', marginBottom: 4 }}>Width (px):</label>
-                <input 
-                  type="number" 
-                  value={formData.size.width} 
-                  onChange={e => setFormData(prev => ({ 
-                    ...prev, 
-                    size: { ...prev.size, width: parseInt(e.target.value) }
-                  }))}
-                  required
-                  style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', marginBottom: 4 }}>Height (px):</label>
-                <input 
-                  type="number" 
-                  value={formData.size.height} 
-                  onChange={e => setFormData(prev => ({ 
-                    ...prev, 
-                    size: { ...prev.size, height: parseInt(e.target.value) }
-                  }))}
-                  required
-                  style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-                />
-              </div>
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Order:</label>
-              <input 
-                type="number" 
-                value={formData.order} 
-                onChange={e => setFormData(prev => ({ ...prev, order: parseInt(e.target.value) }))}
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
+            
             <button type="submit" style={{ background: '#10b981', color: 'white', border: 'none', padding: '10px 20px', borderRadius: 6, cursor: 'pointer' }}>
-              {editingBrand ? 'Update Brand' : 'Create Brand'}
+              {editingBrand ? 'Update Logo' : 'Create Logo'}
             </button>
           </form>
         </div>
@@ -251,17 +179,13 @@ export default function BrandsPage() {
           <thead>
             <tr style={{ background: '#f9fafb' }}>
               <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Logo</th>
-              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Name</th>
-              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Size</th>
-              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Website</th>
-              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Order</th>
               <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {brands.length === 0 ? (
               <tr>
-                <td colSpan="6" style={{ padding: 24, textAlign: 'center', color: '#6b7280' }}>
+                <td colSpan="2" style={{ padding: 24, textAlign: 'center', color: '#6b7280' }}>
                   No brands found. Create your first brand above.
                 </td>
               </tr>
@@ -271,27 +195,15 @@ export default function BrandsPage() {
                   <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
                     <img 
                       src={brand.logo} 
-                      alt={brand.name} 
+                      alt="Brand logo" 
                       style={{ 
-                        width: brand.size?.width || 150, 
-                        height: brand.size?.height || 80, 
+                        width: 150, 
+                        height: 80, 
                         objectFit: 'contain',
                         borderRadius: 4 
                       }} 
                     />
                   </td>
-                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>{brand.name}</td>
-                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
-                    {brand.size?.width || 150} × {brand.size?.height || 80} px
-                  </td>
-                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
-                    {brand.website ? (
-                      <a href={brand.website} target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb' }}>
-                        {brand.website}
-                      </a>
-                    ) : '-'}
-                  </td>
-                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>{brand.order}</td>
                   <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
                     <button 
                       onClick={() => handleEdit(brand)}
