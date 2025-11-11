@@ -61,9 +61,9 @@ export default function Layout({ headerStyle, footerStyle, headTitle, breadcrumb
                 {breadcrumbTitle && <Breadcrumb breadcrumbTitle={breadcrumbTitle} />}
 
                 {children}
-
+            < Footer1 /> 
                 {/* Render a single footer. Default to Footer1 if not specified. */}
-                {footerStyle == 2 ? <Footer2 /> : <Footer1 />}
+            
             </div>
             <BackToTop scroll={scroll} />
         </>
