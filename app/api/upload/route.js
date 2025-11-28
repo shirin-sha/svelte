@@ -5,6 +5,7 @@ import fs from 'fs';
 export async function POST(req) {
   const formData = await req.formData();
   const file = formData.get('image');
+  const type = formData.get('type') || 'general'; // 'services', 'blogs', or 'general'
 
   if (!file || typeof file === 'string') {
     return new Response(JSON.stringify({ error: 'No file uploaded' }), { status: 400 });
@@ -13,9 +14,10 @@ export async function POST(req) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+  // Create subdirectory based on type
+  const uploadDir = path.join(process.cwd(), 'public', 'uploads', type);
 
-  // Create the uploads folder if it doesn't exist
+  // Create the uploads folder and subdirectory if they don't exist
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
@@ -35,9 +37,9 @@ export async function POST(req) {
       });
     }
     
-    // Return the URL (relative path works for Next.js static files)
-    const url = `/uploads/${fileName}`;
-    console.log('File uploaded successfully:', { filePath, url, size: buffer.length });
+    // Return the URL with subdirectory (relative path works for Next.js static files)
+    const url = `/uploads/${type}/${fileName}`;
+    console.log('File uploaded successfully:', { filePath, url, size: buffer.length, type });
     
     return new Response(JSON.stringify({ url }), {
       status: 200,
