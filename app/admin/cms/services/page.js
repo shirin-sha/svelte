@@ -195,15 +195,12 @@ export default function ServicesCMSPage() {
     }
     setIsSubmitting(true);
     try {
-      // Remove cache-busting parameter from URL before saving to DB
-      const cleanImageUrl = formData.imageUrl?.split('?')[0] || formData.imageUrl;
-      
       const payload = {
         title: formData.title,
         shortDescription: formData.shortDescription,
         icon: formData.icon,
         description: editingService?.description || '',
-        imageUrl: cleanImageUrl,
+        imageUrl: formData.imageUrl,
         content: formData.content
       };
       const url = editingService ? `/api/content/service/${editingService._id}` : '/api/content/service';
@@ -254,34 +251,24 @@ export default function ServicesCMSPage() {
       alert('Image must be under 3MB');
       return;
     }
+    
     setImageUploading(true);
     try {
-      // Create a preview URL immediately using blob
-      const previewUrl = URL.createObjectURL(file);
-      setFormData(prev => ({ ...prev, imageUrl: previewUrl }));
-      
-      // Upload the file
       const form = new FormData();
       form.append('image', file);
       form.append('type', 'services');
+      
       const res = await fetch('/api/upload', { method: 'POST', body: form });
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Upload failed');
+        alert('Upload failed');
+        return;
       }
+      
       const json = await res.json();
-      
-      // Replace preview URL with server URL (add cache-busting for production)
-      const serverUrl = `${json.url}?t=${Date.now()}`;
-      setFormData(prev => ({ ...prev, imageUrl: serverUrl }));
-      
-      // Clean up blob URL
-      URL.revokeObjectURL(previewUrl);
+      setFormData(prev => ({ ...prev, imageUrl: json.url }));
     } catch (error) {
-      console.error('Upload error:', error);
-      alert(`Failed to upload image: ${error.message}`);
-      // Reset imageUrl on error
-      setFormData(prev => ({ ...prev, imageUrl: '' }));
+      console.error(error);
+      alert('Failed to upload image');
     } finally {
       setImageUploading(false);
     }

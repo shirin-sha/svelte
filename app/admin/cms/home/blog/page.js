@@ -256,18 +256,22 @@ export default function BlogsPage() {
     const file = e.target.files[0];
     if (!file) return;
 
-    const uploadData = new FormData();
-    uploadData.append('image', file);
-    uploadData.append('type', 'blogs');
-
     try {
+      const uploadData = new FormData();
+      uploadData.append('image', file);
+      uploadData.append('type', 'blogs');
+
       const response = await fetch('/api/upload', { method: 'POST', body: uploadData });
-      if (response.ok) {
-        const data = await response.json();
-        setFormData(prev => ({ ...prev, imageUrl: data.url }));
+      if (!response.ok) {
+        alert('Failed to upload image');
+        return;
       }
+      
+      const data = await response.json();
+      setFormData(prev => ({ ...prev, imageUrl: data.url }));
     } catch (error) {
       console.error('Error uploading image:', error);
+      alert('Error uploading image');
     }
   };
 
