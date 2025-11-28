@@ -71,7 +71,7 @@ export default async function ServiceDetailsPage({ params }) {
                     <div className="text-box1">
               
                     
-
+                    <h2>{service.title}</h2>
                       {service.features && service.features.length > 0 && (
                         <ul>
                           {service.features.map((feature, index) => (
