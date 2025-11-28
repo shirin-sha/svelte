@@ -15,27 +15,24 @@ export async function GET() {
 export async function POST(req) {
   try {
     await dbConnect();
-    const { title, content, excerpt, author, imageUrl, tags, status, category, featured } = await req.json();
+    const { title, content, category, imageUrl, publishedAt } = await req.json();
     
-    if (!title || !content || !author || !imageUrl) {
-      return Response.json({ error: 'Title, content, author, and image are required' }, { status: 400 });
+    if (!title || !content || !category || !imageUrl || !publishedAt) {
+      return Response.json({ error: 'Title, content, category, image, and date are required' }, { status: 400 });
+    }
+
+    const parsedDate = new Date(publishedAt);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return Response.json({ error: 'Invalid published date' }, { status: 400 });
     }
 
     const blogData = {
       title,
       content,
-      excerpt,
-      author,
       imageUrl,
-      category: category || 'Development',
-      tags: tags || [],
-      status: status || 'draft',
-      featured: featured || false
+      category,
+      publishedAt: parsedDate
     };
-
-    if (status === 'published') {
-      blogData.publishedAt = new Date();
-    }
 
     const blog = await Blog.create(blogData);
     return Response.json(blog, { status: 201 });

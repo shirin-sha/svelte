@@ -1,7 +1,11 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
+import dynamic from 'next/dynamic';
+import 'react-quill/dist/quill.snow.css';
+
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 export default function BlogsPage() {
   const [blogs, setBlogs] = useState([]);
@@ -12,16 +16,22 @@ export default function BlogsPage() {
     subtitle: '',
     title: ''
   });
-  const [formData, setFormData] = useState({ 
-    title: '', 
-    content: '', 
-    excerpt: '', 
-    author: '', 
-    imageUrl: '', 
-    tags: '', 
-    status: 'draft' 
+  const [formData, setFormData] = useState({
+    title: '',
+    category: '',
+    imageUrl: '',
+    publishedAt: '',
+    content: ''
   });
   const router = useRouter();
+  const quillModules = useMemo(() => ({
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['link', 'blockquote', 'clean']
+    ]
+  }), []);
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -98,6 +108,10 @@ export default function BlogsPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.title || !formData.category || !formData.imageUrl || !formData.publishedAt || !formData.content) {
+      alert('Please fill Title, Category, Image, Date and Description');
+      return;
+    }
     try {
       const url = editingBlog 
         ? `/api/content/blog/${editingBlog._id}`
@@ -105,26 +119,27 @@ export default function BlogsPage() {
       
       const method = editingBlog ? 'PUT' : 'POST';
       
-      const blogData = {
-        ...formData,
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+      const payload = {
+        title: formData.title,
+        category: formData.category,
+        imageUrl: formData.imageUrl,
+        publishedAt: formData.publishedAt,
+        content: formData.content
       };
       
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(blogData)
+        body: JSON.stringify(payload)
       });
       
       if (response.ok) {
         setFormData({ 
           title: '', 
-          content: '', 
-          excerpt: '', 
-          author: '', 
+          category: '',
           imageUrl: '', 
-          tags: '', 
-          status: 'draft' 
+          publishedAt: '',
+          content: '' 
         });
         setShowForm(false);
         setEditingBlog(null);
@@ -137,14 +152,13 @@ export default function BlogsPage() {
 
   const handleEdit = (blog) => {
     setEditingBlog(blog);
+    const existingDate = blog.publishedAt || blog.createdAt;
     setFormData({
       title: blog.title,
-      content: blog.content,
-      excerpt: blog.excerpt || '',
-      author: blog.author,
+      category: blog.category || '',
       imageUrl: blog.imageUrl,
-      tags: blog.tags ? blog.tags.join(', ') : '',
-      status: blog.status
+      publishedAt: existingDate ? new Date(existingDate).toISOString().split('T')[0] : '',
+      content: blog.content
     });
     setShowForm(true);
   };
@@ -169,12 +183,12 @@ export default function BlogsPage() {
     const file = e.target.files[0];
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append('image', file);
-    formData.append('type', 'blogs');
+    const uploadData = new FormData();
+    uploadData.append('image', file);
+    uploadData.append('type', 'blogs');
 
     try {
-      const response = await fetch('/api/upload', { method: 'POST', body: formData });
+      const response = await fetch('/api/upload', { method: 'POST', body: uploadData });
       if (response.ok) {
         const data = await response.json();
         setFormData(prev => ({ ...prev, imageUrl: data.url }));
@@ -263,65 +277,37 @@ export default function BlogsPage() {
         <div style={{ background: '#fff', padding: 24, borderRadius: 8, marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
           <h3>{editingBlog ? 'Edit Blog Post' : 'Add New Blog Post'}</h3>
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Title:</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: 4 }}>Title:</label>
+                <input 
+                  type="text" 
+                  value={formData.title} 
+                  onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  required
+                  style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: 4 }}>Category:</label>
+                <input 
+                  type="text" 
+                  value={formData.category} 
+                  onChange={e => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                  required
+                  style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+                />
+              </div>
+            </div>
+            <div style={{ margin: '16px 0' }}>
+              <label style={{ display: 'block', marginBottom: 4 }}>Published Date:</label>
               <input 
-                type="text" 
-                value={formData.title} 
-                onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                type="date" 
+                value={formData.publishedAt} 
+                onChange={e => setFormData(prev => ({ ...prev, publishedAt: e.target.value }))}
                 required
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+                style={{ width: '50%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
               />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Author:</label>
-              <input 
-                type="text" 
-                value={formData.author} 
-                onChange={e => setFormData(prev => ({ ...prev, author: e.target.value }))}
-                required
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Excerpt:</label>
-              <textarea 
-                value={formData.excerpt} 
-                onChange={e => setFormData(prev => ({ ...prev, excerpt: e.target.value }))}
-                rows={3}
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Content:</label>
-              <textarea 
-                value={formData.content} 
-                onChange={e => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                required
-                rows={8}
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Tags (comma-separated):</label>
-              <input 
-                type="text" 
-                value={formData.tags} 
-                onChange={e => setFormData(prev => ({ ...prev, tags: e.target.value }))}
-                placeholder="design, architecture, interior"
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', marginBottom: 4 }}>Status:</label>
-              <select 
-                value={formData.status} 
-                onChange={e => setFormData(prev => ({ ...prev, status: e.target.value }))}
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              >
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-              </select>
             </div>
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', marginBottom: 4 }}>Image:</label>
@@ -348,10 +334,22 @@ export default function BlogsPage() {
               />
             </div>
             {formData.imageUrl && (
-              <div style={{ marginBottom: 16 }}>
-                <img src={formData.imageUrl} alt="Preview" style={{ maxWidth: 200, height: 'auto' }} />
+              <div style={{ marginBottom: 16, display: 'inline-flex', border: '1px solid #e5e7eb', borderRadius: 8, padding: 8 }}>
+                <img src={formData.imageUrl} alt="Preview" style={{ width: 200, height: 130, objectFit: 'cover', borderRadius: 6 }} />
               </div>
             )}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', marginBottom: 4 }}>Main Description:</label>
+              <div style={{ border: '1px solid #ddd', borderRadius: 4 }}>
+                <ReactQuill 
+                  value={formData.content} 
+                  onChange={value => setFormData(prev => ({ ...prev, content: value }))}
+                  modules={quillModules}
+                  theme="snow"
+                  style={{ height: 250, marginBottom: 40 }}
+                />
+              </div>
+            </div>
             <button type="submit" style={{ background: '#10b981', color: 'white', border: 'none', padding: '10px 20px', borderRadius: 6, cursor: 'pointer' }}>
               {editingBlog ? 'Update Blog Post' : 'Create Blog Post'}
             </button>
@@ -365,8 +363,8 @@ export default function BlogsPage() {
             <tr style={{ background: '#f9fafb' }}>
               <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Image</th>
               <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Title</th>
-              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Author</th>
-              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Status</th>
+              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Category</th>
+              <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Date</th>
               <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>Actions</th>
             </tr>
           </thead>
@@ -384,17 +382,9 @@ export default function BlogsPage() {
                     <img src={blog.imageUrl} alt={blog.title} style={{ width: 60, height: 40, objectFit: 'cover', borderRadius: 4 }} />
                   </td>
                   <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>{blog.title}</td>
-                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>{blog.author}</td>
+                  <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>{blog.category}</td>
                   <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
-                    <span style={{ 
-                      padding: '4px 8px', 
-                      borderRadius: 4, 
-                      fontSize: 12,
-                      background: blog.status === 'published' ? '#10b981' : '#f59e0b',
-                      color: 'white'
-                    }}>
-                      {blog.status}
-                    </span>
+                    {blog.publishedAt ? new Date(blog.publishedAt).toLocaleDateString() : '-'}
                   </td>
                   <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
                     <button 

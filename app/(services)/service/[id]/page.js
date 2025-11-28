@@ -1,31 +1,46 @@
-import Layout from "@/components/layout/Layout"
-import Link from "next/link"
-import { notFound } from 'next/navigation'
+import Layout from "@/components/layout/Layout";
+import Link from "next/link";
+import { notFound } from 'next/navigation';
+
+async function fetchJson(path) {
+  const base = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const res = await fetch(`${base}${path}`, { cache: 'no-store' });
+  if (!res.ok) return null;
+  return res.json();
+}
 
 async function getService(id) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/content/service/${id}`, {
-      cache: 'no-store'
-    });
-    if (response.ok) {
-      return response.json();
-    }
+    return await fetchJson(`/api/content/service/${id}`);
   } catch (error) {
     console.error('Error fetching service:', error);
+    return null;
   }
-  return null;
+}
+
+async function getAllServices() {
+  try {
+    const list = await fetchJson('/api/content/service');
+    return Array.isArray(list) ? list : [];
+  } catch (error) {
+    console.error('Error fetching services list:', error);
+    return [];
+  }
 }
 
 export default async function ServiceDetailsPage({ params }) {
-  const service = await getService(params.id);
-  
+  const [service, services] = await Promise.all([
+    getService(params.id),
+    getAllServices()
+  ]);
+
   if (!service) {
     notFound();
   }
 
   return (
     <>
-      <Layout headerStyle={4} footerStyle={1} breadcrumbTitle={service.title}>
+      <Layout headerStyle={2} footerStyle={1} breadcrumbTitle={service.title}>
         <div>
           {/*Start Services Details */}
           <section className="services-details">
@@ -40,9 +55,7 @@ export default async function ServiceDetailsPage({ params }) {
 
                     <div className="text-box1">
                       <h2>{service.title}</h2>
-                      <p className="text1">{service.description}</p>
-
-                      <p className="text2">{service.shortDescription}</p>
+                    
 
                       {service.features && service.features.length > 0 && (
                         <ul>
@@ -87,13 +100,19 @@ export default async function ServiceDetailsPage({ params }) {
                       <h3 className="sidebar__title">Services</h3>
 
                       <ul className="sidebar__category-list">
-                        <li><Link href="/service">All Services <span className="icon-left-arrow"></span></Link></li>
-                        <li><Link href="/service/architecture">Architecture <span className="icon-left-arrow"></span></Link></li>
-                        <li><Link href="/service/interior-design">Interior Design <span className="icon-left-arrow"></span></Link></li>
-                        <li><Link href="/service/construction-site">Construction Site <span className="icon-left-arrow"></span></Link></li>
-                        <li><Link href="/service/building-renovation">Building Renovation <span className="icon-left-arrow"></span></Link></li>
-                        <li><Link href="/service/security-system">Security System <span className="icon-left-arrow"></span></Link></li>
-                        <li><Link href="/service/uiux-designing">UI/UX Designing <span className="icon-left-arrow"></span></Link></li>
+                        <li>
+                          <Link href="/service">
+                            All Services <span className="icon-left-arrow"></span>
+                          </Link>
+                        </li>
+                        {services.map((item) => (
+                          <li key={item._id}>
+                            <Link href={`/service/${item._id}`}>
+                              {item.title}
+                              {item._id === service._id && <span className="icon-left-arrow"></span>}
+                            </Link>
+                          </li>
+                        ))}
                       </ul>
                     </div>
                     {/*End Sidebar Single */}

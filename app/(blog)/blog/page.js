@@ -9,7 +9,7 @@ async function getBlogs() {
     });
     if (response.ok) {
       const blogs = await response.json();
-      return blogs.filter(blog => blog.status === 'published');
+      return blogs.sort((a, b) => new Date(b.publishedAt || b.createdAt) - new Date(a.publishedAt || a.createdAt));
     }
   } catch (error) {
     console.error('Error fetching blogs:', error);

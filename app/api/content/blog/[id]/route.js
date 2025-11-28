@@ -24,10 +24,21 @@ export async function PUT(req, { params }) {
     await dbConnect();
     const { id } = params;
     const updateData = await req.json();
+
+    const { title, content, category, imageUrl, publishedAt } = updateData;
+
+    if (!title || !content || !category || !imageUrl || !publishedAt) {
+      return Response.json({ error: 'Title, content, category, image, and date are required' }, { status: 400 });
+    }
+
+    const parsedDate = new Date(publishedAt);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return Response.json({ error: 'Invalid published date' }, { status: 400 });
+    }
     
     const blog = await Blog.findByIdAndUpdate(
       id,
-      { ...updateData, updatedAt: new Date() },
+      { title, content, category, imageUrl, publishedAt: parsedDate, updatedAt: new Date() },
       { new: true }
     );
     

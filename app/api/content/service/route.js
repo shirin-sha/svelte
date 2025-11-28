@@ -17,13 +17,13 @@ export async function POST(req) {
     await dbConnect();
     const { title, description, shortDescription, icon, imageUrl, content, features, benefits, featured } = await req.json();
     
-    if (!title || !description || !shortDescription || !icon || !imageUrl || !content) {
-      return Response.json({ error: 'Title, description, short description, icon, image, and content are required' }, { status: 400 });
+    if (!title || !shortDescription || !icon || !imageUrl || !content) {
+      return Response.json({ error: 'Title, short description, icon, image, and content are required' }, { status: 400 });
     }
 
     const serviceData = {
       title,
-      description,
+      description: description || '',
       shortDescription,
       icon,
       imageUrl,

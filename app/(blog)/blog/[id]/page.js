@@ -2,9 +2,11 @@ import Layout from "@/components/layout/Layout"
 import Link from "next/link"
 import { notFound } from 'next/navigation'
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
 async function getBlog(id) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/content/blog/${id}`, {
+    const response = await fetch(`${BASE_URL}/api/content/blog/${id}`, {
       cache: 'no-store'
     });
     if (response.ok) {
@@ -16,10 +18,46 @@ async function getBlog(id) {
   return null;
 }
 
+async function getServices() {
+  try {
+    const response = await fetch(`${BASE_URL}/api/content/service`, {
+      cache: 'no-store'
+    });
+    if (response.ok) {
+      return response.json();
+    }
+  } catch (error) {
+    console.error('Error fetching services:', error);
+  }
+  return [];
+}
+
+async function getRecentBlogs(currentId) {
+  try {
+    const response = await fetch(`${BASE_URL}/api/content/blog`, {
+      cache: 'no-store'
+    });
+    if (response.ok) {
+      const blogs = await response.json();
+      return blogs
+        .filter(blog => blog._id !== currentId)
+        .sort((a, b) => new Date(b.publishedAt || b.createdAt) - new Date(a.publishedAt || a.createdAt))
+        .slice(0, 3);
+    }
+  } catch (error) {
+    console.error('Error fetching recent blogs:', error);
+  }
+  return [];
+}
+
 export default async function BlogDetailsPage({ params }) {
-  const blog = await getBlog(params.id);
+  const [blog, services, recentBlogs] = await Promise.all([
+    getBlog(params.id),
+    getServices(),
+    getRecentBlogs(params.id)
+  ]);
   
-  if (!blog || blog.status !== 'published') {
+  if (!blog) {
     notFound();
   }
 
@@ -34,7 +72,7 @@ export default async function BlogDetailsPage({ params }) {
 
   return (
     <>
-      <Layout headerStyle={1} footerStyle={1} breadcrumbTitle={blog.title}>
+      <Layout headerStyle={2} footerStyle={1} breadcrumbTitle={'fdsfds'}>
         {/*Start Blog Details */}
         <section className="blog-details">
           <div className="container">
@@ -49,37 +87,13 @@ export default async function BlogDetailsPage({ params }) {
                   <div className="blog-details__content-text1">
                     <h2>{blog.title}</h2>
                     <p className="text1">
-                      {formatDate(blog.publishedAt || blog.createdAt)} _ {blog.category} _ BY {blog.author}
+                      {formatDate(blog.publishedAt || blog.createdAt)} _ {blog.category}
                     </p>
                     <div 
                       className="text2"
                       dangerouslySetInnerHTML={{ __html: blog.content }}
                     />
                   </div>
-
-                  {blog.tags && blog.tags.length > 0 && (
-                    <div className="blog-details__content-text4">
-                      <div className="tag-box">
-                        <div className="title">
-                          <h2>Posted in:</h2>
-                        </div>
-
-                        <div className="tag-box-list">
-                          <ul>
-                            {blog.tags.map((tag, index) => (
-                              <li key={index}>
-                                <Link href={`/blog?tag=${tag}`}>{tag}</Link>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-
-                      <div className="icon-box">
-                        <Link href="#"><span className="icon-share"></span></Link>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
               {/*End Blog Sidebar Content */}
@@ -87,27 +101,25 @@ export default async function BlogDetailsPage({ params }) {
               {/*Start Sidebar */}
               <div className="col-xl-4">
                 <div className="sidebar">
-                  {/*Start Sidebar Single */}
-                  <div className="sidebar__single sidebar__search">
-                    <h3 className="sidebar__title">Search</h3>
-                    <form action="#" className="sidebar__search-form">
-                      <input type="search" placeholder="Keywords here...."/>
-                      <button type="submit"><i className="fa fa-search"></i></button>
-                    </form>
-                  </div>
+               
                   {/*End Sidebar Single */}
 
                   {/*Start Sidebar Single */}
                   <div className="sidebar__single sidebar__category">
-                    <h3 className="sidebar__title">Categories</h3>
+                    <h3 className="sidebar__title">Services</h3>
 
                     <ul className="sidebar__category-list">
-                      <li><Link className="active" href="#">Architecture <span className="icon-left-arrow"></span></Link></li>
-                      <li><Link href="#">Interior Design <span className="icon-left-arrow"></span></Link></li>
-                      <li><Link href="#">Ui/Ux Designing <span className="icon-left-arrow"></span></Link></li>
-                      <li><Link href="#">Building Renovation <span className="icon-left-arrow"></span></Link></li>
-                      <li><Link href="#">Construction Site <span className="icon-left-arrow"></span></Link></li>
-                      <li><Link href="#">Security System <span className="icon-left-arrow"></span></Link></li>
+                      {services.length === 0 ? (
+                        <li style={{ color: '#6b7280' }}>No services available</li>
+                      ) : (
+                        services.map(service => (
+                          <li key={service._id}>
+                            <Link href={`/service/${service._id}`}>
+                              {service.title} <span className="icon-left-arrow"></span>
+                            </Link>
+                          </li>
+                        ))
+                      )}
                     </ul>
                   </div>
                   {/*End Sidebar Single */}
@@ -117,62 +129,34 @@ export default async function BlogDetailsPage({ params }) {
                     <h3 className="sidebar__title">Recent Post</h3>
 
                     <ul className="sidebar__recent-post-box">
-                      <li>
-                        <div className="inner">
-                          <div className="img-box">
-                            <img src="assets/img/blog/sidebar-img1.jpg" alt=""/>
-                          </div>
+                      {recentBlogs.length === 0 ? (
+                        <li style={{ color: '#6b7280' }}>No recent posts</li>
+                      ) : (
+                        recentBlogs.map(post => (
+                          <li key={post._id}>
+                            <div className="inner">
+                              <div className="img-box">
+                                <img src={post.imageUrl} alt={post.title}/>
+                              </div>
 
-                          <div className="content-box">
-                            <h4><Link href="#">Keep Your Business <br/> Safe Ensure High</Link></h4>
-                            <p><span className="icon-clock"></span> April 21, 2023</p>
-                          </div>
-                        </div>
-                      </li>
-
-                      <li>
-                        <div className="inner">
-                          <div className="img-box">
-                            <img src="assets/img/blog/sidebar-img2.jpg" alt=""/>
-                          </div>
-
-                          <div className="content-box">
-                            <h4><Link href="#">We've Been a Strategy <br/> Thought Leader for</Link></h4>
-                            <p><span className="icon-clock"></span> April 21, 2023</p>
-                          </div>
-                        </div>
-                      </li>
-
-                      <li>
-                        <div className="inner">
-                          <div className="img-box">
-                            <img src="assets/img/blog/sidebar-img3.jpg" alt=""/>
-                          </div>
-
-                          <div className="content-box">
-                            <h4><Link href="#">This Week's Top <br/> Stories About It</Link></h4>
-                            <p><span className="icon-clock"></span> April 21, 2023</p>
-                          </div>
-                        </div>
-                      </li>
+                              <div className="content-box">
+                                <h4>
+                                  <Link href={`/blog/${post._id}`}>
+                                    {post.title}
+                                  </Link>
+                                </h4>
+                                <p>
+                                  <span className="icon-clock"></span> {formatDate(post.publishedAt || post.createdAt)}
+                                </p>
+                              </div>
+                            </div>
+                          </li>
+                        ))
+                      )}
                     </ul>
                   </div>
                   {/*End Sidebar Single */}
 
-                  {/*Start Sidebar Single */}
-                  <div className="sidebar__single sidebar__tags">
-                    <h3 className="sidebar__title">Tags</h3>
-                    <ul className="sidebar__tags-list clearfix">
-                      <li><Link href="#">IT Technology</Link></li>
-                      <li><Link href="#">Software</Link></li>
-                      <li><Link href="#">Design</Link></li>
-                      <li><Link href="#">Service</Link></li>
-                      <li><Link href="#">Development</Link></li>
-                      <li><Link href="#">Digital</Link></li>
-                      <li><Link href="#">Cyber</Link></li>
-                    </ul>
-                  </div>
-                  {/*End Sidebar Single */}
                 </div>
               </div>
               {/*End Sidebar */}

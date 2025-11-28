@@ -17,7 +17,7 @@ export default function Header3({ scroll, isMobileMenu, handleMobileMenu, isSide
                                 <div className="main-header-one__inner">
                                     <div className="main-header-one__left">
                                         <div className="logo-box">
-                                            <a href="/"> <img src="assets/img/resource/logo-2.png" alt=""/></a>
+                                            <Link href="/"><img src="/assets/img/resource/logo-2.png" alt="Logo" /></Link>
                                         </div>
                                     </div>
 

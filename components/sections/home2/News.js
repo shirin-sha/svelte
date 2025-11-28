@@ -45,9 +45,10 @@ export default function News() {
             const res = await fetch('/api/content/blog')
             if (res.ok) {
                 const posts = await res.json()
-                // Filter only published posts and limit to 3 for homepage
-                const publishedPosts = posts.filter(post => post.status === 'published').slice(0, 3)
-                setBlogPosts(publishedPosts)
+                const latestPosts = posts
+                  .sort((a, b) => new Date(b.publishedAt || b.createdAt) - new Date(a.publishedAt || a.createdAt))
+                  .slice(0, 3)
+                setBlogPosts(latestPosts)
             }
         } catch (e) {
             console.error('Error fetching blog posts:', e)
@@ -104,14 +105,19 @@ export default function News() {
                         blogPosts.map((post, index) => {
                             const delay = index * 100; // Stagger animation delays
                             const animationClass = index % 2 === 0 ? 'fadeInLeft' : 'fadeInRight';
-                            const formattedDate = post.createdAt ? new Date(post.createdAt).toLocaleDateString('en-US', {
+                            const formattedDate = post.publishedAt || post.createdAt ? new Date(post.publishedAt || post.createdAt).toLocaleDateString('en-US', {
                                 day: '2-digit',
                                 month: 'long',
                                 year: 'numeric'
                             }) : 'Recent';
                             
                             return (
-                                <div className="col-xl-4 col-lg-4 wow fadeInLeft" data-wow-delay="0ms" data-wow-duration="1500ms">
+                                <div 
+                                    key={post._id} 
+                                    className={`col-xl-4 col-lg-4 wow ${animationClass}`} 
+                                    data-wow-delay={`${delay}ms`} 
+                                    data-wow-duration="1500ms"
+                                >
                                     <div className="blog-one__single">
                                         <div className="blog-one__single-img">
                                             <div className="inner">
@@ -120,7 +126,7 @@ export default function News() {
                                                     alt={post.title}
                                                 />
                                                 <div className="overlay-icon">
-                                                    <Link href={`/blog-details/${post._id}`}>
+                                                    <Link href={`/blog/${post._id}`}>
                                                         <span className="icon-plus"></span>
                                                     </Link>
                                                 </div>
@@ -130,7 +136,7 @@ export default function News() {
                                             <ul className="meta-info">
                                                 <li>
                                                     <p>
-                                                        <Link href="#">{post.tags && post.tags.length > 0 ? post.tags[0] : 'General'}</Link>
+                                                        <Link href="#">{post.category || 'General'}</Link>
                                                     </p>
                                                 </li>
                                                 <li>
@@ -138,12 +144,12 @@ export default function News() {
                                                 </li>
                                             </ul>
                                             <h2>
-                                                <Link href={`/blog-details/${post._id}`}>
+                                                <Link href={`/blog/${post._id}`}>
                                                     {post.title}
                                                 </Link>
                                             </h2>
                                             <div className="btn-box">
-                                                <Link href={`/blog-details/${post._id}`}>
+                                                <Link href={`/blog/${post._id}`}>
                                                     READ MORE <span className="icon-left-arrow"></span>
                                                 </Link>
                                             </div>

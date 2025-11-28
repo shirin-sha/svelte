@@ -5,7 +5,7 @@ export default function Footer1() {
         <>
             {/*Start Footer One */}
             <footer className="footer-one">
-                <div className="shape1"><img className="float-bob-y" src="assets/img/shape/footer-v1-shape1.png" alt=""/></div>
+                <div className="shape1"><img className="float-bob-y" src="/assets/img/shape/footer-v1-shape1.png" alt=""/></div>
                 {/*Start Footer Main */}
                 <div className="footer-main">
                     <div className="container">
@@ -14,7 +14,7 @@ export default function Footer1() {
                             <div className="col-xl-3 col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".1s">
                                 <div className="single-footer-widget footer-widget__about">
                                     <div className="logo-box">
-                                        <Link href="/"><img src="assets/img/resource/logo-1.png" alt=""/></Link>
+                                        <Link href="/"><img src="/assets/img/resource/logo-1.png" alt="Logo"/></Link>
                                     </div>
 
                                     <div className="footer-widget__about-inner">

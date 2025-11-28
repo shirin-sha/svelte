@@ -10,11 +10,7 @@ const blogSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  excerpt: {
-    type: String,
-    trim: true
-  },
-  author: {
+  category: {
     type: String,
     required: true,
     trim: true
@@ -23,30 +19,9 @@ const blogSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  category: {
-    type: String,
-    default: 'Development',
-    trim: true
-  },
-  tags: [{
-    type: String,
-    trim: true
-  }],
-  status: {
-    type: String,
-    enum: ['draft', 'published'],
-    default: 'draft'
-  },
   publishedAt: {
-    type: Date
-  },
-  featured: {
-    type: Boolean,
-    default: false
-  },
-  views: {
-    type: Number,
-    default: 0
+    type: Date,
+    required: true
   }
 }, {
   timestamps: true

@@ -1,7 +1,11 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
+import dynamic from 'next/dynamic';
+import 'react-quill/dist/quill.snow.css';
+
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 export default function ServicesCMSPage() {
   const [services, setServices] = useState([]);
@@ -11,8 +15,23 @@ export default function ServicesCMSPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingService, setEditingService] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({ title: '', shortDescription: '', icon: '' });
+  const [imageUploading, setImageUploading] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    shortDescription: '',
+    icon: '',
+    imageUrl: '',
+    content: ''
+  });
   const router = useRouter();
+  const quillModules = useMemo(() => ({
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['link', 'blockquote', 'clean']
+    ]
+  }), []);
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -97,8 +116,8 @@ export default function ServicesCMSPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.shortDescription || !formData.icon) {
-      alert('Please fill Title, Short Description and Icon');
+    if (!formData.title || !formData.shortDescription || !formData.icon || !formData.imageUrl || !formData.content) {
+      alert('Please fill all required fields (Title, Icon, Short Description, Main Description, Image)');
       return;
     }
     setIsSubmitting(true);
@@ -106,7 +125,10 @@ export default function ServicesCMSPage() {
       const payload = {
         title: formData.title,
         shortDescription: formData.shortDescription,
-        icon: formData.icon
+        icon: formData.icon,
+        description: editingService?.description || '',
+        imageUrl: formData.imageUrl,
+        content: formData.content
       };
       const url = editingService ? `/api/content/service/${editingService._id}` : '/api/content/service';
       const method = editingService ? 'PUT' : 'POST';
@@ -116,7 +138,13 @@ export default function ServicesCMSPage() {
         throw new Error(err.error || 'Failed to save');
       }
       await fetchServices();
-      setFormData({ title: '', shortDescription: '', icon: '' });
+      setFormData({
+        title: '',
+        shortDescription: '',
+        icon: '',
+        imageUrl: '',
+        content: ''
+      });
       setEditingService(null);
       setShowForm(false);
       alert('Saved');
@@ -132,9 +160,38 @@ export default function ServicesCMSPage() {
     setFormData({
       title: service.title || '',
       shortDescription: service.shortDescription || '',
-      icon: service.icon || ''
+      icon: service.icon || '',
+      imageUrl: service.imageUrl || '',
+      content: service.content || ''
     });
     setShowForm(true);
+  };
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      alert('Image must be under 3MB');
+      return;
+    }
+    setImageUploading(true);
+    try {
+      const form = new FormData();
+      form.append('image', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: form });
+      if (!res.ok) throw new Error('Upload failed');
+      const json = await res.json();
+      setFormData(prev => ({ ...prev, imageUrl: json.url }));
+    } catch (error) {
+      console.error(error);
+      alert('Failed to upload image');
+    } finally {
+      setImageUploading(false);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -198,6 +255,26 @@ export default function ServicesCMSPage() {
             <div style={{ marginTop: 12 }}>
               <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, color: '#374151' }}>Short Description</label>
               <textarea value={formData.shortDescription} onChange={(e) => setFormData(prev => ({ ...prev, shortDescription: e.target.value }))} required rows={2} style={{ width: '100%', padding: 12, border: '1px solid #d1d5db', borderRadius: 8 }} />
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, color: '#374151' }}>Card Image</label>
+              {formData.imageUrl && (
+                <div style={{ marginBottom: 8, display: 'inline-flex', border: '1px solid #e5e7eb', padding: 8, borderRadius: 10, background: '#f9fafb' }}>
+                  <img
+                    src={formData.imageUrl}
+                    alt="Service preview"
+                    style={{ width: 180, height: 110, objectFit: 'cover', borderRadius: 6, boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}
+                  />
+                </div>
+              )}
+              <input type="file" accept="image/*" onChange={handleImageUpload} disabled={imageUploading} style={{ width: '100%', padding: 10, border: '1px solid #d1d5db', borderRadius: 8 }} />
+              {imageUploading && <p style={{ color: '#3b82f6', fontSize: 12, marginTop: 6 }}>Uploading image...</p>}
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, color: '#374151' }}>Main Description</label>
+              <div style={{ border: '1px solid #d1d5db', borderRadius: 8, overflow: 'hidden' }}>
+                <ReactQuill value={formData.content} onChange={(val) => setFormData(prev => ({ ...prev, content: val }))} modules={quillModules} theme="snow" />
+              </div>
             </div>
             <div style={{ marginTop: 12 }}>
               <button type="submit" disabled={isSubmitting} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: 6, cursor: 'pointer' }}>

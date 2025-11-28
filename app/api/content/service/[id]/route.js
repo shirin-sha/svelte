@@ -25,13 +25,13 @@ export async function PUT(req, { params }) {
     const { id } = params;
     const updateData = await req.json();
     
-    if (!updateData.title || !updateData.description || !updateData.shortDescription || !updateData.icon || !updateData.imageUrl || !updateData.content) {
-      return Response.json({ error: 'Title, description, short description, icon, image, and content are required' }, { status: 400 });
+    if (!updateData.title || !updateData.shortDescription || !updateData.icon || !updateData.imageUrl || !updateData.content) {
+      return Response.json({ error: 'Title, short description, icon, image, and content are required' }, { status: 400 });
     }
 
     const service = await Service.findByIdAndUpdate(
       id,
-      { ...updateData, updatedAt: new Date() },
+      { ...updateData, description: updateData.description || '', updatedAt: new Date() },
       { new: true, runValidators: true }
     );
 

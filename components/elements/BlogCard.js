@@ -2,7 +2,9 @@ import Link from 'next/link';
 
 export default function BlogCard({ blog, variant = 'default' }) {
   const formatDate = (dateString) => {
+    if (!dateString) return 'Recent';
     const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return 'Recent';
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long', 
@@ -32,10 +34,10 @@ export default function BlogCard({ blog, variant = 'default' }) {
 
             <li>
               <div className="icon">
-                <span className="icon-user"></span>
+                <span className="icon-folder"></span>
               </div>
               <div className="text">
-                <p><Link href="#">{blog.author}</Link></p>
+                <p><Link href="#">{blog.category || 'General'}</Link></p>
               </div>
             </li>
           </ul>
@@ -71,7 +73,7 @@ export default function BlogCard({ blog, variant = 'default' }) {
       <div className="blog-one__single-content">
         <ul className="meta-info">
           <li>
-            <p><Link href="#">{blog.category}</Link></p>
+                <p><Link href="#">{blog.category || 'General'}</Link></p>
           </li>
           <li>
             <p>{formatDate(blog.publishedAt || blog.createdAt)}</p>
@@ -82,11 +84,7 @@ export default function BlogCard({ blog, variant = 'default' }) {
             {blog.title}
           </Link>
         </h2>
-        {blog.excerpt && (
-          <p style={{ marginBottom: '15px', color: '#666' }}>
-            {blog.excerpt}
-          </p>
-        )}
+     
         <div className="btn-box">
           <Link href={`/blog/${blog._id}`}>
             READ MORE <span className="icon-left-arrow"></span>

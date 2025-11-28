@@ -7,14 +7,14 @@ export default function Footer2() {
             <footer className="main-footer alternat-2">
                 <div className="widget-section">
                     <div className="pattern-layer">
-                        <div className="pattern-1" style={{ backgroundImage: 'url(assets/images/shape/shape-27.png)' }}></div>
-                        <div className="pattern-2" style={{ backgroundImage: 'url(assets/images/shape/shape-28.png)' }}></div>
+                        <div className="pattern-1" style={{ backgroundImage: 'url(/assets/images/shape/shape-27.png)' }}></div>
+                        <div className="pattern-2" style={{ backgroundImage: 'url(/assets/images/shape/shape-28.png)' }}></div>
                     </div>
                     <div className="auto-container">
                         <div className="row clearfix">
                             <div className="col-lg-3 col-md-6 col-sm-12 footer-column">
                                 <div className="logo-widget footer-widget">
-                                    <figure className="footer-logo"><Link href="/#"><img src="assets/images/logo.png" alt="" /></Link></figure>
+                                    <figure className="footer-logo"><Link href="/"><img src="/assets/images/logo.png" alt="Logo" /></Link></figure>
                                     <div className="text">
                                         <p>Lorem ipsum dolor sit amet consectetur adipiscing elitsollicit udin netus quis ornare. Massa pharetra in nec sed nunc.</p>
                                         <p>nisl viverra massa imperdiet. Dui mattis quis congue fames.</p>
