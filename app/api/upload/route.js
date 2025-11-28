@@ -14,16 +14,16 @@ export async function POST(req) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
-  // Create subdirectory based on type
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads', type);
+  // Use flat structure with type prefix in filename
+  const uploadDir = path.join(process.cwd(), 'public', 'uploads');
 
-  // Create the uploads folder and subdirectory if they don't exist
+  // Create the uploads folder if it doesn't exist
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
 
-  // Generate a unique file name
-  const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+  // Generate a unique file name with type prefix
+  const fileName = `${type}_${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
   const filePath = path.join(uploadDir, fileName);
 
   try {
@@ -37,8 +37,8 @@ export async function POST(req) {
       });
     }
     
-    // Return the URL with subdirectory (relative path works for Next.js static files)
-    const url = `/uploads/${type}/${fileName}`;
+    // Return the URL with flat structure (relative path works for Next.js static files)
+    const url = `/uploads/${fileName}`;
     console.log('File uploaded successfully:', { filePath, url, size: buffer.length, type });
     
     return new Response(JSON.stringify({ url }), {
