@@ -26,13 +26,26 @@ export async function POST(req) {
 
   try {
     await writeFile(filePath, buffer);
-    return new Response(JSON.stringify({ url: `/uploads/${fileName}` }), {
+    
+    // Verify file was written
+    if (!fs.existsSync(filePath)) {
+      console.error('File was not created:', filePath);
+      return new Response(JSON.stringify({ error: 'File was not saved' }), {
+        status: 500
+      });
+    }
+    
+    // Return the URL (relative path works for Next.js static files)
+    const url = `/uploads/${fileName}`;
+    console.log('File uploaded successfully:', { filePath, url, size: buffer.length });
+    
+    return new Response(JSON.stringify({ url }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
     console.error('Error saving file:', error);
-    return new Response(JSON.stringify({ error: 'Failed to save file' }), {
+    return new Response(JSON.stringify({ error: 'Failed to save file', details: error.message }), {
       status: 500
     });
   }

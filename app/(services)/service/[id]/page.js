@@ -9,6 +9,21 @@ async function fetchJson(path) {
   return res.json();
 }
 
+// Helper to ensure image URL is correct
+function getImageUrl(imagePath) {
+  if (!imagePath) return null;
+  // If already absolute URL, return as-is
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
+  // If starts with /, it's already correct for Next.js public folder
+  if (imagePath.startsWith('/')) {
+    return imagePath;
+  }
+  // Otherwise, prepend /
+  return `/${imagePath}`;
+}
+
 async function getService(id) {
   try {
     return await fetchJson(`/api/content/service/${id}`);
@@ -50,11 +65,38 @@ export default async function ServiceDetailsPage({ params }) {
                 <div className="col-xl-8">
                   <div className="services-details__content">
                     <div className="services-details__content-img1">
-                      <img src={service.imageUrl} alt={service.title} />
+                      {service.imageUrl ? (
+                        <img 
+                          src={getImageUrl(service.imageUrl)} 
+                          alt={service.title}
+                          onError={(e) => {
+                            console.error('Failed to load service image:', service.imageUrl);
+                            // Try without any query parameters
+                            const cleanUrl = service.imageUrl.split('?')[0];
+                            if (e.target.src !== getImageUrl(cleanUrl)) {
+                              e.target.src = getImageUrl(cleanUrl);
+                            } else {
+                              e.target.style.display = 'none';
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div style={{ 
+                          width: '100%', 
+                          height: '400px', 
+                          background: '#f3f4f6', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          color: '#6b7280'
+                        }}>
+                          No image available
+                        </div>
+                      )}
                     </div>
 
                     <div className="text-box1">
-                      <h2>{service.title}</h2>
+              
                     
 
                       {service.features && service.features.length > 0 && (

@@ -122,12 +122,15 @@ export default function ServicesCMSPage() {
     }
     setIsSubmitting(true);
     try {
+      // Remove cache-busting parameter from URL before saving to DB
+      const cleanImageUrl = formData.imageUrl?.split('?')[0] || formData.imageUrl;
+      
       const payload = {
         title: formData.title,
         shortDescription: formData.shortDescription,
         icon: formData.icon,
         description: editingService?.description || '',
-        imageUrl: formData.imageUrl,
+        imageUrl: cleanImageUrl,
         content: formData.content
       };
       const url = editingService ? `/api/content/service/${editingService._id}` : '/api/content/service';
@@ -180,15 +183,31 @@ export default function ServicesCMSPage() {
     }
     setImageUploading(true);
     try {
+      // Create a preview URL immediately using blob
+      const previewUrl = URL.createObjectURL(file);
+      setFormData(prev => ({ ...prev, imageUrl: previewUrl }));
+      
+      // Upload the file
       const form = new FormData();
       form.append('image', file);
       const res = await fetch('/api/upload', { method: 'POST', body: form });
-      if (!res.ok) throw new Error('Upload failed');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Upload failed');
+      }
       const json = await res.json();
-      setFormData(prev => ({ ...prev, imageUrl: json.url }));
+      
+      // Replace preview URL with server URL (add cache-busting for production)
+      const serverUrl = `${json.url}?t=${Date.now()}`;
+      setFormData(prev => ({ ...prev, imageUrl: serverUrl }));
+      
+      // Clean up blob URL
+      URL.revokeObjectURL(previewUrl);
     } catch (error) {
-      console.error(error);
-      alert('Failed to upload image');
+      console.error('Upload error:', error);
+      alert(`Failed to upload image: ${error.message}`);
+      // Reset imageUrl on error
+      setFormData(prev => ({ ...prev, imageUrl: '' }));
     } finally {
       setImageUploading(false);
     }
@@ -263,6 +282,16 @@ export default function ServicesCMSPage() {
                   <img
                     src={formData.imageUrl}
                     alt="Service preview"
+                    onError={(e) => {
+                      console.error('Image failed to load:', formData.imageUrl);
+                      // Try without cache-busting parameter
+                      const urlWithoutParam = formData.imageUrl.split('?')[0];
+                      if (e.target.src !== urlWithoutParam) {
+                        e.target.src = urlWithoutParam;
+                      } else {
+                        e.target.style.display = 'none';
+                      }
+                    }}
                     style={{ width: 180, height: 110, objectFit: 'cover', borderRadius: 6, boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}
                   />
                 </div>
