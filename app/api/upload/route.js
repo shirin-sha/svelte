@@ -13,7 +13,6 @@ export async function POST(req) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
-  // Simple flat structure
   const uploadDir = path.join(process.cwd(), 'public', 'uploads');
 
   // Create the uploads folder if it doesn't exist
@@ -21,7 +20,7 @@ export async function POST(req) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
 
-  // Generate a unique file name (simple)
+  // Generate a unique file name
   const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
   const filePath = path.join(uploadDir, fileName);
 
@@ -36,7 +35,7 @@ export async function POST(req) {
       });
     }
     
-    // Return the URL (simple)
+    // Return the URL (relative path works for Next.js static files)
     const url = `/uploads/${fileName}`;
     console.log('File uploaded successfully:', { filePath, url, size: buffer.length });
     

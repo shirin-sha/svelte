@@ -1,6 +1,7 @@
 import Layout from "@/components/layout/Layout";
 import Link from "next/link";
 import { notFound } from 'next/navigation';
+import SafeImage from '@/components/elements/SafeImage';
 
 async function fetchJson(path) {
   const base = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
@@ -50,7 +51,21 @@ export default async function ServiceDetailsPage({ params }) {
                 <div className="col-xl-8">
                   <div className="services-details__content">
                     <div className="services-details__content-img1">
-                      <img src={service.imageUrl} alt={service.title} />
+                      {service.imageUrl ? (
+                        <SafeImage src={service.imageUrl} alt={service.title} />
+                      ) : (
+                        <div style={{ 
+                          width: '100%', 
+                          height: '400px', 
+                          background: '#f3f4f6', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          color: '#6b7280'
+                        }}>
+                          No image available
+                        </div>
+                      )}
                     </div>
 
                     <div className="text-box1">

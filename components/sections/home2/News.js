@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from "next/link"
+import SafeImage from '@/components/elements/SafeImage';
 
 
 export default function News() {
@@ -121,7 +122,7 @@ export default function News() {
                                     <div className="blog-one__single">
                                         <div className="blog-one__single-img">
                                             <div className="inner">
-                                                <img 
+                                                <SafeImage 
                                                     src={post.imageUrl} 
                                                     alt={post.title}
                                                 />

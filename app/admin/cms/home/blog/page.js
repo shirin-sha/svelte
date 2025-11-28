@@ -1,8 +1,9 @@
 'use client';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
 import dynamic from 'next/dynamic';
+import { getImageUrl } from '@/lib/imageUtils';
 import 'react-quill/dist/quill.snow.css';
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
@@ -24,86 +25,14 @@ export default function BlogsPage() {
     content: ''
   });
   const router = useRouter();
-  const quillRef = useRef(null);
-
   const quillModules = useMemo(() => ({
     toolbar: [
       [{ header: [1, 2, 3, false] }],
       ['bold', 'italic', 'underline', 'strike'],
       [{ list: 'ordered' }, { list: 'bullet' }],
-      [{ color: [] }, { background: [] }],
-      [{ align: [] }],
       ['link', 'blockquote', 'clean']
-    ],
-    clipboard: {
-      matchVisual: true
-    }
+    ]
   }), []);
-
-  // Preserve formatting when pasting from PDF or other sources
-  useEffect(() => {
-    if (quillRef.current && typeof window !== 'undefined') {
-      const quill = quillRef.current.getEditor();
-      
-      // Override the default paste behavior
-      quill.clipboard.addMatcher(Node.ELEMENT_NODE, (node, delta) => {
-        const ops = [];
-        delta.ops.forEach(op => {
-          if (op.insert && typeof op.insert === 'string') {
-            const attrs = {};
-            
-            // Preserve bold
-            if (node.style?.fontWeight === 'bold' || parseInt(node.style?.fontWeight) >= 600 || 
-                node.tagName === 'STRONG' || node.tagName === 'B') {
-              attrs.bold = true;
-            }
-            
-            // Preserve italic
-            if (node.style?.fontStyle === 'italic' || 
-                node.tagName === 'EM' || node.tagName === 'I') {
-              attrs.italic = true;
-            }
-            
-            // Preserve underline
-            if (node.style?.textDecoration?.includes('underline') || node.tagName === 'U') {
-              attrs.underline = true;
-            }
-            
-            // Preserve strikethrough
-            if (node.style?.textDecoration?.includes('line-through') || 
-                node.tagName === 'S' || node.tagName === 'STRIKE') {
-              attrs.strike = true;
-            }
-            
-            // Preserve color
-            if (node.style?.color) {
-              attrs.color = node.style.color;
-            }
-            
-            // Preserve background
-            if (node.style?.backgroundColor) {
-              attrs.background = node.style.backgroundColor;
-            }
-            
-            // Preserve header tags
-            if (node.tagName === 'H1') attrs.header = 1;
-            if (node.tagName === 'H2') attrs.header = 2;
-            if (node.tagName === 'H3') attrs.header = 3;
-            
-            ops.push({
-              insert: op.insert,
-              attributes: { ...op.attributes, ...attrs }
-            });
-          } else {
-            ops.push(op);
-          }
-        });
-        
-        delta.ops = ops;
-        return delta;
-      });
-    }
-  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -255,21 +184,18 @@ export default function BlogsPage() {
     const file = e.target.files[0];
     if (!file) return;
 
-    try {
-      const uploadData = new FormData();
-      uploadData.append('image', file);
+    const uploadData = new FormData();
+    uploadData.append('image', file);
+    uploadData.append('type', 'blogs');
 
+    try {
       const response = await fetch('/api/upload', { method: 'POST', body: uploadData });
-      if (!response.ok) {
-        alert('Failed to upload image');
-        return;
+      if (response.ok) {
+        const data = await response.json();
+        setFormData(prev => ({ ...prev, imageUrl: data.url }));
       }
-      
-      const data = await response.json();
-      setFormData(prev => ({ ...prev, imageUrl: data.url }));
     } catch (error) {
       console.error('Error uploading image:', error);
-      alert('Error uploading image');
     }
   };
 
@@ -411,8 +337,16 @@ export default function BlogsPage() {
             {formData.imageUrl && (
               <div style={{ marginBottom: 16, display: 'inline-flex', border: '1px solid #e5e7eb', borderRadius: 8, padding: 8 }}>
                 <img 
-                  src={formData.imageUrl} 
+                  src={getImageUrl(formData.imageUrl)} 
                   alt="Preview"
+                  onError={(e) => {
+                    const cleanUrl = formData.imageUrl.split('?')[0];
+                    if (e.target.src !== getImageUrl(cleanUrl)) {
+                      e.target.src = getImageUrl(cleanUrl);
+                    } else {
+                      e.target.style.display = 'none';
+                    }
+                  }}
                   style={{ width: 200, height: 130, objectFit: 'cover', borderRadius: 6 }} 
                 />
               </div>
@@ -420,17 +354,11 @@ export default function BlogsPage() {
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', marginBottom: 4 }}>Main Description:</label>
               <div style={{ border: '1px solid #ddd', borderRadius: 4 }}>
-                <ReactQuill
-                  ref={quillRef}
-                  value={formData.content}
+                <ReactQuill 
+                  value={formData.content} 
                   onChange={value => setFormData(prev => ({ ...prev, content: value }))}
                   modules={quillModules}
                   theme="snow"
-                  formats={[
-                    'header', 'bold', 'italic', 'underline', 'strike',
-                    'list', 'bullet', 'color', 'background', 'align',
-                    'link', 'blockquote'
-                  ]}
                   style={{ height: 250, marginBottom: 40 }}
                 />
               </div>
@@ -465,8 +393,16 @@ export default function BlogsPage() {
                 <tr key={blog._id}>
                   <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
                     <img 
-                      src={blog.imageUrl} 
+                      src={getImageUrl(blog.imageUrl)} 
                       alt={blog.title}
+                      onError={(e) => {
+                        const cleanUrl = blog.imageUrl?.split('?')[0];
+                        if (cleanUrl && e.target.src !== getImageUrl(cleanUrl)) {
+                          e.target.src = getImageUrl(cleanUrl);
+                        } else {
+                          e.target.style.display = 'none';
+                        }
+                      }}
                       style={{ width: 60, height: 40, objectFit: 'cover', borderRadius: 4 }} 
                     />
                   </td>

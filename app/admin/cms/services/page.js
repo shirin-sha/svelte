@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
 import dynamic from 'next/dynamic';
@@ -24,86 +24,14 @@ export default function ServicesCMSPage() {
     content: ''
   });
   const router = useRouter();
-  const quillRef = useRef(null);
-
   const quillModules = useMemo(() => ({
     toolbar: [
       [{ header: [1, 2, 3, false] }],
       ['bold', 'italic', 'underline', 'strike'],
       [{ list: 'ordered' }, { list: 'bullet' }],
-      [{ color: [] }, { background: [] }],
-      [{ align: [] }],
       ['link', 'blockquote', 'clean']
-    ],
-    clipboard: {
-      matchVisual: true
-    }
+    ]
   }), []);
-
-  // Preserve formatting when pasting from PDF or other sources
-  useEffect(() => {
-    if (quillRef.current && typeof window !== 'undefined') {
-      const quill = quillRef.current.getEditor();
-      
-      // Override the default paste behavior
-      quill.clipboard.addMatcher(Node.ELEMENT_NODE, (node, delta) => {
-        const ops = [];
-        delta.ops.forEach(op => {
-          if (op.insert && typeof op.insert === 'string') {
-            const attrs = {};
-            
-            // Preserve bold
-            if (node.style?.fontWeight === 'bold' || parseInt(node.style?.fontWeight) >= 600 || 
-                node.tagName === 'STRONG' || node.tagName === 'B') {
-              attrs.bold = true;
-            }
-            
-            // Preserve italic
-            if (node.style?.fontStyle === 'italic' || 
-                node.tagName === 'EM' || node.tagName === 'I') {
-              attrs.italic = true;
-            }
-            
-            // Preserve underline
-            if (node.style?.textDecoration?.includes('underline') || node.tagName === 'U') {
-              attrs.underline = true;
-            }
-            
-            // Preserve strikethrough
-            if (node.style?.textDecoration?.includes('line-through') || 
-                node.tagName === 'S' || node.tagName === 'STRIKE') {
-              attrs.strike = true;
-            }
-            
-            // Preserve color
-            if (node.style?.color) {
-              attrs.color = node.style.color;
-            }
-            
-            // Preserve background
-            if (node.style?.backgroundColor) {
-              attrs.background = node.style.backgroundColor;
-            }
-            
-            // Preserve header tags
-            if (node.tagName === 'H1') attrs.header = 1;
-            if (node.tagName === 'H2') attrs.header = 2;
-            if (node.tagName === 'H3') attrs.header = 3;
-            
-            ops.push({
-              insert: op.insert,
-              attributes: { ...op.attributes, ...attrs }
-            });
-          } else {
-            ops.push(op);
-          }
-        });
-        
-        delta.ops = ops;
-        return delta;
-      });
-    }
-  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -194,12 +122,15 @@ export default function ServicesCMSPage() {
     }
     setIsSubmitting(true);
     try {
+      // Remove cache-busting parameter from URL before saving to DB
+      const cleanImageUrl = formData.imageUrl?.split('?')[0] || formData.imageUrl;
+      
       const payload = {
         title: formData.title,
         shortDescription: formData.shortDescription,
         icon: formData.icon,
         description: editingService?.description || '',
-        imageUrl: formData.imageUrl,
+        imageUrl: cleanImageUrl,
         content: formData.content
       };
       const url = editingService ? `/api/content/service/${editingService._id}` : '/api/content/service';
@@ -250,23 +181,33 @@ export default function ServicesCMSPage() {
       alert('Image must be under 3MB');
       return;
     }
-    
     setImageUploading(true);
     try {
+      // Create a preview URL immediately using blob
+      const previewUrl = URL.createObjectURL(file);
+      setFormData(prev => ({ ...prev, imageUrl: previewUrl }));
+      
+      // Upload the file
       const form = new FormData();
       form.append('image', file);
-      
       const res = await fetch('/api/upload', { method: 'POST', body: form });
       if (!res.ok) {
-        alert('Upload failed');
-        return;
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Upload failed');
       }
-      
       const json = await res.json();
-      setFormData(prev => ({ ...prev, imageUrl: json.url }));
+      
+      // Replace preview URL with server URL (add cache-busting for production)
+      const serverUrl = `${json.url}?t=${Date.now()}`;
+      setFormData(prev => ({ ...prev, imageUrl: serverUrl }));
+      
+      // Clean up blob URL
+      URL.revokeObjectURL(previewUrl);
     } catch (error) {
-      console.error(error);
-      alert('Failed to upload image');
+      console.error('Upload error:', error);
+      alert(`Failed to upload image: ${error.message}`);
+      // Reset imageUrl on error
+      setFormData(prev => ({ ...prev, imageUrl: '' }));
     } finally {
       setImageUploading(false);
     }
@@ -358,23 +299,12 @@ export default function ServicesCMSPage() {
               <input type="file" accept="image/*" onChange={handleImageUpload} disabled={imageUploading} style={{ width: '100%', padding: 10, border: '1px solid #d1d5db', borderRadius: 8 }} />
               {imageUploading && <p style={{ color: '#3b82f6', fontSize: 12, marginTop: 6 }}>Uploading image...</p>}
             </div>
-              <div style={{ marginTop: 12 }}>
-                <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, color: '#374151' }}>Main Description</label>
-                <div style={{ border: '1px solid #d1d5db', borderRadius: 8, overflow: 'hidden' }}>
-                  <ReactQuill 
-                    ref={quillRef}
-                    value={formData.content} 
-                    onChange={(val) => setFormData(prev => ({ ...prev, content: val }))} 
-                    modules={quillModules} 
-                    theme="snow"
-                    formats={[
-                      'header', 'bold', 'italic', 'underline', 'strike',
-                      'list', 'bullet', 'color', 'background', 'align',
-                      'link', 'blockquote'
-                    ]}
-                  />
-                </div>
+            <div style={{ marginTop: 12 }}>
+              <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, color: '#374151' }}>Main Description</label>
+              <div style={{ border: '1px solid #d1d5db', borderRadius: 8, overflow: 'hidden' }}>
+                <ReactQuill value={formData.content} onChange={(val) => setFormData(prev => ({ ...prev, content: val }))} modules={quillModules} theme="snow" />
               </div>
+            </div>
             <div style={{ marginTop: 12 }}>
               <button type="submit" disabled={isSubmitting} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: 6, cursor: 'pointer' }}>
                 {editingService ? 'Update Service' : 'Create Service'}
