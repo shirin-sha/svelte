@@ -28,20 +28,79 @@ export default function BlogsPage() {
       [{ header: [1, 2, 3, false] }],
       ['bold', 'italic', 'underline', 'strike'],
       [{ list: 'ordered' }, { list: 'bullet' }],
-      [{ color: [] }],
+      [{ color: [] }, { background: [] }],
       [{ align: [] }],
       ['link', 'blockquote', 'clean']
     ],
     clipboard: {
-      // Preserve styles when pasting
-      matchVisual: false,
-      // Allow all HTML tags and styles
-      allowed: {
-        tags: ['p', 'br', 'strong', 'em', 'u', 's', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'blockquote', 'span', 'div'],
-        attributes: ['href', 'style', 'class', 'color', 'background-color']
-      }
+      matchVisual: true
     }
   }), []);
+
+  // Preserve formatting when pasting from PDF or other sources
+  useEffect(() => {
+    if (quillRef.current && typeof window !== 'undefined') {
+      const quill = quillRef.current.getEditor();
+      
+      // Override the default paste behavior
+      quill.clipboard.addMatcher(Node.ELEMENT_NODE, (node, delta) => {
+        const ops = [];
+        delta.ops.forEach(op => {
+          if (op.insert && typeof op.insert === 'string') {
+            const attrs = {};
+            
+            // Preserve bold
+            if (node.style?.fontWeight === 'bold' || parseInt(node.style?.fontWeight) >= 600 || 
+                node.tagName === 'STRONG' || node.tagName === 'B') {
+              attrs.bold = true;
+            }
+            
+            // Preserve italic
+            if (node.style?.fontStyle === 'italic' || 
+                node.tagName === 'EM' || node.tagName === 'I') {
+              attrs.italic = true;
+            }
+            
+            // Preserve underline
+            if (node.style?.textDecoration?.includes('underline') || node.tagName === 'U') {
+              attrs.underline = true;
+            }
+            
+            // Preserve strikethrough
+            if (node.style?.textDecoration?.includes('line-through') || 
+                node.tagName === 'S' || node.tagName === 'STRIKE') {
+              attrs.strike = true;
+            }
+            
+            // Preserve color
+            if (node.style?.color) {
+              attrs.color = node.style.color;
+            }
+            
+            // Preserve background
+            if (node.style?.backgroundColor) {
+              attrs.background = node.style.backgroundColor;
+            }
+            
+            // Preserve header tags
+            if (node.tagName === 'H1') attrs.header = 1;
+            if (node.tagName === 'H2') attrs.header = 2;
+            if (node.tagName === 'H3') attrs.header = 3;
+            
+            ops.push({
+              insert: op.insert,
+              attributes: { ...op.attributes, ...attrs }
+            });
+          } else {
+            ops.push(op);
+          }
+        });
+        
+        delta.ops = ops;
+        return delta;
+      });
+    }
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -258,17 +317,11 @@ export default function BlogsPage() {
               <label style={{ display: 'block', marginBottom: 4 }}>Main Description:</label>
               <div style={{ border: '1px solid #ddd', borderRadius: 4 }}>
                 <ReactQuill
-                  ref={quillRef}
                   value={formData.content}
                   onChange={value => setFormData(prev => ({ ...prev, content: value }))}
                   modules={quillModules}
                   theme="snow"
                   style={{ height: 250, marginBottom: 40 }}
-                  formats={[
-                    'header', 'bold', 'italic', 'underline', 'strike',
-                    'list', 'bullet', 'color', 'align',
-                    'link', 'blockquote'
-                  ]}
                 />
               </div>
             </div>
