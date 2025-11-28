@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
 import dynamic from 'next/dynamic';
@@ -25,13 +25,26 @@ export default function BlogsPage() {
     content: ''
   });
   const router = useRouter();
+  const quillRef = useRef(null);
+
   const quillModules = useMemo(() => ({
     toolbar: [
       [{ header: [1, 2, 3, false] }],
       ['bold', 'italic', 'underline', 'strike'],
       [{ list: 'ordered' }, { list: 'bullet' }],
+      [{ color: [] }],
+      [{ align: [] }],
       ['link', 'blockquote', 'clean']
-    ]
+    ],
+    clipboard: {
+      // Preserve styles when pasting
+      matchVisual: false,
+      // Allow all HTML tags and styles
+      allowed: {
+        tags: ['p', 'br', 'strong', 'em', 'u', 's', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'blockquote', 'span', 'div'],
+        attributes: ['href', 'style', 'class', 'color', 'background-color']
+      }
+    }
   }), []);
 
   useEffect(() => {
@@ -354,12 +367,18 @@ export default function BlogsPage() {
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', marginBottom: 4 }}>Main Description:</label>
               <div style={{ border: '1px solid #ddd', borderRadius: 4 }}>
-                <ReactQuill 
-                  value={formData.content} 
+                <ReactQuill
+                  ref={quillRef}
+                  value={formData.content}
                   onChange={value => setFormData(prev => ({ ...prev, content: value }))}
                   modules={quillModules}
                   theme="snow"
                   style={{ height: 250, marginBottom: 40 }}
+                  formats={[
+                    'header', 'bold', 'italic', 'underline', 'strike',
+                    'list', 'bullet', 'color', 'align',
+                    'link', 'blockquote'
+                  ]}
                 />
               </div>
             </div>
