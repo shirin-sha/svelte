@@ -35,8 +35,8 @@ export async function POST(req) {
       });
     }
     
-    // Return the URL (relative path works for Next.js static files)
-    const url = `/uploads/${fileName}`;
+    // Return API route URL (works in production with next start)
+    const url = `/api/uploads/${fileName}`;
     console.log('File uploaded successfully:', { filePath, url, size: buffer.length });
     
     return new Response(JSON.stringify({ url }), {
