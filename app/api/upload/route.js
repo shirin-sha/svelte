@@ -5,7 +5,6 @@ import fs from 'fs';
 export async function POST(req) {
   const formData = await req.formData();
   const file = formData.get('image');
-  const type = formData.get('type') || 'general'; // 'services', 'blogs', or 'general'
 
   if (!file || typeof file === 'string') {
     return new Response(JSON.stringify({ error: 'No file uploaded' }), { status: 400 });
@@ -14,7 +13,7 @@ export async function POST(req) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
-  // Use flat structure with type prefix in filename
+  // Simple flat structure
   const uploadDir = path.join(process.cwd(), 'public', 'uploads');
 
   // Create the uploads folder if it doesn't exist
@@ -22,8 +21,8 @@ export async function POST(req) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
 
-  // Generate a unique file name with type prefix
-  const fileName = `${type}_${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+  // Generate a unique file name (simple)
+  const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
   const filePath = path.join(uploadDir, fileName);
 
   try {
@@ -37,9 +36,9 @@ export async function POST(req) {
       });
     }
     
-    // Return the URL with flat structure (relative path works for Next.js static files)
+    // Return the URL (simple)
     const url = `/uploads/${fileName}`;
-    console.log('File uploaded successfully:', { filePath, url, size: buffer.length, type });
+    console.log('File uploaded successfully:', { filePath, url, size: buffer.length });
     
     return new Response(JSON.stringify({ url }), {
       status: 200,

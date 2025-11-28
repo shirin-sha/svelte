@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import SafeImage from '@/components/elements/SafeImage';
 
 export default function BlogCard({ blog, variant = 'default' }) {
   const formatDate = (dateString) => {
@@ -18,7 +17,7 @@ export default function BlogCard({ blog, variant = 'default' }) {
       <div className="blog-sidebar__single">
         <div className="blog-sidebar__single-img">
           <div className="inner">
-            <SafeImage src={blog.imageUrl} alt={blog.title} />
+            <img src={blog.imageUrl} alt={blog.title} />
           </div>
         </div>
 
@@ -63,7 +62,7 @@ export default function BlogCard({ blog, variant = 'default' }) {
     <div className="blog-one__single">
       <div className="blog-one__single-img">
         <div className="inner">
-          <SafeImage src={blog.imageUrl} alt={blog.title} />
+          <img src={blog.imageUrl} alt={blog.title} />
           <div className="overlay-icon">
             <Link href={`/blog/${blog._id}`}>
               <span className="icon-plus"></span>

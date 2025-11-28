@@ -3,7 +3,6 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
 import dynamic from 'next/dynamic';
-import { getImageUrl } from '@/lib/imageUtils';
 import 'react-quill/dist/quill.snow.css';
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
@@ -205,7 +204,6 @@ export default function BlogsPage() {
     try {
       const uploadData = new FormData();
       uploadData.append('image', file);
-      uploadData.append('type', 'blogs');
 
       const response = await fetch('/api/upload', { method: 'POST', body: uploadData });
       if (!response.ok) {
@@ -302,16 +300,8 @@ export default function BlogsPage() {
             {formData.imageUrl && (
               <div style={{ marginBottom: 16, display: 'inline-flex', border: '1px solid #e5e7eb', borderRadius: 8, padding: 8 }}>
                 <img 
-                  src={getImageUrl(formData.imageUrl)} 
+                  src={formData.imageUrl} 
                   alt="Preview" 
-                  onError={(e) => {
-                    const cleanUrl = formData.imageUrl.split('?')[0];
-                    if (e.target.src !== getImageUrl(cleanUrl)) {
-                      e.target.src = getImageUrl(cleanUrl);
-                    } else {
-                      e.target.style.display = 'none';
-                    }
-                  }}
                   style={{ width: 200, height: 130, objectFit: 'cover', borderRadius: 6 }} 
                 />
               </div>
@@ -360,16 +350,8 @@ export default function BlogsPage() {
                 <tr key={blog._id}>
                   <td style={{ padding: 12, borderBottom: '1px solid #e5e7eb' }}>
                     <img 
-                      src={getImageUrl(blog.imageUrl)} 
+                      src={blog.imageUrl} 
                       alt={blog.title}
-                      onError={(e) => {
-                        const cleanUrl = blog.imageUrl?.split('?')[0];
-                        if (cleanUrl && e.target.src !== getImageUrl(cleanUrl)) {
-                          e.target.src = getImageUrl(cleanUrl);
-                        } else {
-                          e.target.style.display = 'none';
-                        }
-                      }}
                       style={{ width: 60, height: 40, objectFit: 'cover', borderRadius: 4 }} 
                     />
                   </td>

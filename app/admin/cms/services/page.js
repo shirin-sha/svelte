@@ -154,7 +154,6 @@ export default function ServicesCMSPage() {
     try {
       const form = new FormData();
       form.append('image', file);
-      form.append('type', 'services');
       const res = await fetch('/api/upload', { method: 'POST', body: form });
       if (!res.ok) throw new Error('Upload failed');
       const json = await res.json();
@@ -256,7 +255,6 @@ export default function ServicesCMSPage() {
     try {
       const form = new FormData();
       form.append('image', file);
-      form.append('type', 'services');
       
       const res = await fetch('/api/upload', { method: 'POST', body: form });
       if (!res.ok) {

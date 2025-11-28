@@ -1,7 +1,6 @@
 import Layout from "@/components/layout/Layout"
 import Link from "next/link"
 import { notFound } from 'next/navigation'
-import SafeImage from '@/components/elements/SafeImage';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
@@ -82,21 +81,7 @@ export default async function BlogDetailsPage({ params }) {
               <div className="col-xl-8">
                 <div className="blog-details__content">
                   <div className="blog-details__content-img1">
-                    {blog.imageUrl ? (
-                      <SafeImage src={blog.imageUrl} alt={blog.title} />
-                    ) : (
-                      <div style={{ 
-                        width: '100%', 
-                        height: '400px', 
-                        background: '#f3f4f6', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        color: '#6b7280'
-                      }}>
-                        No image available
-                      </div>
-                    )}
+                    <img src={blog.imageUrl} alt={blog.title} />
                   </div>
 
                   <div className="blog-details__content-text1">
@@ -151,7 +136,7 @@ export default async function BlogDetailsPage({ params }) {
                           <li key={post._id}>
                             <div className="inner">
                               <div className="img-box">
-                                <SafeImage src={post.imageUrl} alt={post.title} />
+                                <img src={post.imageUrl} alt={post.title} />
                               </div>
 
                               <div className="content-box">
