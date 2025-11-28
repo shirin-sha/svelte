@@ -1,27 +1,13 @@
 import Layout from "@/components/layout/Layout";
 import Link from "next/link";
 import { notFound } from 'next/navigation';
+import SafeImage from '@/components/elements/SafeImage';
 
 async function fetchJson(path) {
   const base = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   const res = await fetch(`${base}${path}`, { cache: 'no-store' });
   if (!res.ok) return null;
   return res.json();
-}
-
-// Helper to ensure image URL is correct
-function getImageUrl(imagePath) {
-  if (!imagePath) return null;
-  // If already absolute URL, return as-is
-  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-    return imagePath;
-  }
-  // If starts with /, it's already correct for Next.js public folder
-  if (imagePath.startsWith('/')) {
-    return imagePath;
-  }
-  // Otherwise, prepend /
-  return `/${imagePath}`;
 }
 
 async function getService(id) {
@@ -66,20 +52,7 @@ export default async function ServiceDetailsPage({ params }) {
                   <div className="services-details__content">
                     <div className="services-details__content-img1">
                       {service.imageUrl ? (
-                        <img 
-                          src={getImageUrl(service.imageUrl)} 
-                          alt={service.title}
-                          onError={(e) => {
-                            console.error('Failed to load service image:', service.imageUrl);
-                            // Try without any query parameters
-                            const cleanUrl = service.imageUrl.split('?')[0];
-                            if (e.target.src !== getImageUrl(cleanUrl)) {
-                              e.target.src = getImageUrl(cleanUrl);
-                            } else {
-                              e.target.style.display = 'none';
-                            }
-                          }}
-                        />
+                        <SafeImage src={service.imageUrl} alt={service.title} />
                       ) : (
                         <div style={{ 
                           width: '100%', 
