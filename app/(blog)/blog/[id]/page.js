@@ -73,7 +73,7 @@ export default async function BlogDetailsPage({ params }) {
 
   return (
     <>
-      <Layout headerStyle={2} footerStyle={1} breadcrumbTitle={'fdsfds'}>
+      <Layout headerStyle={2} footerStyle={1} breadcrumbTitle={blog.title}>
         {/*Start Blog Details */}
         <section className="blog-details">
           <div className="container">
