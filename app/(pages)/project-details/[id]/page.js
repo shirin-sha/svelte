@@ -44,7 +44,7 @@ export default async function ProjectDetailsPage({ params }) {
 
   return (
     <>
-      <Layout headerStyle={4} footerStyle={1} breadcrumbTitle={project.title}>
+      <Layout headerStyle={2} footerStyle={1} breadcrumbTitle={project.title}>
         {/*Start Project Details */}
         <section className="project-details">
           <div className="container">
