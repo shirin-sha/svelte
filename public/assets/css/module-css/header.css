@@ -885,3 +885,89 @@
 .main-header-one.style4 .menu-area .mobile-nav-toggler:hover {
     color: var(--thm-primary);
 }
+
+/*=============================
+	Header Fixes for 1440px Breakpoint
+===============================*/
+@media screen and (min-width: 1200px) and (max-width: 1440px) {
+    .main-header-one .auto-container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    .main-header-one__inner {
+        flex-wrap: nowrap;
+        gap: 15px;
+        width: 100%;
+    }
+
+    .main-header-one__left {
+        flex-shrink: 0;
+        min-width: auto;
+        max-width: 200px;
+    }
+
+    .main-header-one__middle {
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: calc(100% - 250px);
+        overflow: visible;
+    }
+
+    .navbar-wrap {
+        width: 100%;
+        overflow: visible;
+    }
+
+    .navbar-wrap ul {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        gap: 0;
+        margin: 0;
+        width: 100%;
+    }
+
+    .navbar-wrap ul li {
+        flex-shrink: 0;
+    }
+
+    .navbar-wrap ul li + li {
+        margin-left: 30px;
+    }
+
+    .navbar-wrap ul li a {
+        font-size: 14px;
+        white-space: nowrap;
+        padding: 43.5px 0px 42.5px;
+    }
+
+    .main-header-one__right {
+        flex-shrink: 0;
+        min-width: auto;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    /* Prevent logo from shrinking too much */
+    .main-header-one__left .logo-box a img {
+        max-width: 180px;
+        width: auto;
+        height: auto;
+    }
+}
+
+/* Additional fix for exact 1440px */
+@media screen and (min-width: 1430px) and (max-width: 1647px) {
+    .navbar-wrap ul li + li {
+        margin-left: 35px;
+    }
+
+    .navbar-wrap ul li a {
+        font-size: 15px;
+    }
+
+    .main-header-one__inner {
+        gap: 20px;
+    }
+}
